@@ -1,0 +1,50 @@
+:root {
+  color: #1f1f1f;
+  background: #f5f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #f5f7fb 0%, #eef3ff 100%);
+}
+
+.app-sider {
+  border-right: 1px solid rgba(5, 5, 5, 0.06);
+}
+
+.brand-block {
+  padding: 24px;
+}
+
+.app-header {
+  padding: 24px 32px 0;
+  background: transparent;
+  height: auto;
+  line-height: 1.4;
+}
+
+.app-content {
+  padding: 24px 32px 32px;
+}
+
+.soft-card {
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(31, 35, 41, 0.06);
+}
+
+.loading-wrap {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.highlight-list {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.9;
+}

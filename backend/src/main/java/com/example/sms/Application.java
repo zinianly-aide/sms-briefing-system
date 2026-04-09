@@ -1,7 +1,11 @@
 package com.example.sms;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 public class Application {
     public static void main(String[] args) {
-        System.out.println("SMS Briefing Backend Bootstrap");
+        SpringApplication.run(Application.class, args);
     }
 }
