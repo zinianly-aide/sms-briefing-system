@@ -9,8 +9,9 @@
 ## 当前进度
 - ✅ 阶段1：补齐系统架构设计文档
 - ✅ 阶段2：搭建可运行前后端基础工程
-- ✅ 阶段3：通讯录 / 群组 / 模板接口首版
-- 🚧 阶段4：简讯录入与预览
+- ✅ 阶段3：联系人 / 群组 / 模板 / 发送任务 前后端闭环
+- ✅ 阶段4：简讯录入与详情流真实接入
+- 🚧 阶段5：全局联调、文档收口、体验完善
 
 ## 目录结构
 ```text
@@ -75,11 +76,13 @@ npm run dev
 
 ## 已实现能力
 - 仪表盘聚合接口 `/api/dashboard`
-- 发送任务列表与创建接口 `/api/tasks`
-- 通讯录接口 `/api/contacts`（列表、新增）
-- 群组接口 `/api/groups`（列表、新增）
-- 模板接口 `/api/templates`（列表、新增）
-- Ant Design 运营看板页面 + 快速任务创建
+- 通讯录接口 `/api/contacts`（完整 CRUD + 搜索）
+- 群组接口 `/api/groups`（完整 CRUD + 搜索）
+- 模板接口 `/api/templates`（完整 CRUD + 搜索）
+- 发送任务接口 `/api/tasks`（完整 CRUD + 搜索）
+- 简讯接口 `/api/briefings`（完整 CRUD + 搜索）
+- React + Ant Design 页面已接入真实后端 API
+- Briefing 编辑提交后可进入详情页
 
 ## 文档
 - `docs/project-plan.md`：阶段计划

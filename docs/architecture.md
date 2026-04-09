@@ -20,20 +20,22 @@
 4. 查询与统计：任务详情、发送回执、失败原因、渠道统计
 5. 集成中心：HR、短信网关、审计日志
 
-## 5. 数据模型（首版）
-- contact：联系人主档，手机号、部门、在岗状态、标签
-- contact_group：群组定义，支持手工筛选/规则筛选
-- briefing_template：模板内容与状态
-- briefing_record：简讯草稿/已提交内容
-- send_task：发送任务主表
-- send_task_detail：每个接收人发送结果
+## 5. 数据模型（当前实现）
+- contact：联系人主档，手机号、部门、职位、状态、创建/更新时间
+- contact_group：群组定义，支持部门、成员数、标签、同步时间、状态
+- briefing_template：模板内容、分类、状态、维护人
+- briefing：简讯草稿/已提交内容，包含模板、渠道、作者、版本、发送对象
+- send_task：发送任务主表，包含渠道、预约时间、状态、覆盖人数、成功率
+- send_task_detail：每个接收人发送结果（预留，未实现）
 
-## 6. API 首批规划
+## 6. API 当前实现
 - `GET /api/dashboard`：运营看板聚合数据
-- `GET /api/tasks`：任务列表
-- `POST /api/tasks`：创建发送任务
-- 后续扩展：contacts/groups/templates CRUD、task detail、stats
+- `/api/contacts`：联系人 CRUD + 搜索
+- `/api/groups`：群组 CRUD + 搜索
+- `/api/templates`：模板 CRUD + 搜索
+- `/api/tasks`：发送任务 CRUD + 搜索
+- `/api/briefings`：简讯 CRUD + 搜索
 
 ## 7. 开发阶段映射
-- 已完成：阶段1文档补齐、阶段2可运行骨架
-- 下一步：阶段3 通讯录 / 群组 / 模板 CRUD + MyBatis 持久化
+- 已完成：阶段1文档补齐、阶段2可运行骨架、阶段3主数据与任务模块前后端闭环、阶段4简讯录入与详情流真实化
+- 下一步：阶段5 全局联调、页面收口、文档补全
