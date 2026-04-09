@@ -5,7 +5,7 @@ import { createBriefing } from '../api/briefing';
 import { fetchGroups } from '../api/group';
 import { fetchTemplates } from '../api/template';
 
-export default function BriefingEditorPage() {
+export default function BriefingEditorPage({ onCreated }) {
   const [form] = Form.useForm();
   const [preview, setPreview] = useState('');
   const [groups, setGroups] = useState([]);
@@ -37,7 +37,7 @@ export default function BriefingEditorPage() {
   const handleFinish = async (values) => {
     try {
       setLoading(true);
-      await createBriefing({
+      const created = await createBriefing({
         title: values.title,
         content: values.content,
         templateId: values.templateId,
@@ -51,6 +51,7 @@ export default function BriefingEditorPage() {
       message.success('简讯已提交');
       form.resetFields();
       setPreview('');
+      onCreated?.(created);
     } catch (err) {
       message.error(err.message || '提交简讯失败');
     } finally {

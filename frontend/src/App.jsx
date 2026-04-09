@@ -8,12 +8,14 @@ import GroupsPage from './pages/GroupsPage';
 import TemplatesPage from './pages/TemplatesPage';
 import SendRecordsPage from './pages/SendRecordsPage';
 import BriefingEditorPage from './pages/BriefingEditorPage';
+import BriefingDetailPage from './pages/BriefingDetailPage';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [dashboard, setDashboard] = useState(null);
   const [error, setError] = useState('');
   const [activePage, setActivePage] = useState('contacts');
+  const [currentBriefingId, setCurrentBriefingId] = useState(null);
 
   const loadDashboard = async () => {
     try {
@@ -54,7 +56,11 @@ export default function App() {
       return <SendRecordsPage />;
     }
     if (activePage === 'briefing') {
-      return <BriefingEditorPage />;
+      return currentBriefingId ? (
+        <BriefingDetailPage briefingId={currentBriefingId} onBack={() => setCurrentBriefingId(null)} />
+      ) : (
+        <BriefingEditorPage onCreated={(created) => setCurrentBriefingId(created?.id)} />
+      );
     }
     return <ContactsPage />;
   };
