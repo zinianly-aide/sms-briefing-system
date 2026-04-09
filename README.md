@@ -88,6 +88,8 @@ npm run dev
 - `docs/project-plan.md`：阶段计划
 - `docs/architecture.md`：架构设计与 API 规划
 - `docs/architecture-decisions.md`：架构与本地开发决策记录
+- `docs/smoke-test.md`：手工验收与 smoke test 清单
+- `docs/acceptance-summary.md`：阶段性验收总结
 - `backend/README.md`：后端配置说明
 - `db/init/01-schema.sql`：MySQL 初始化脚本
 - `TODO.md`：下一阶段待办
