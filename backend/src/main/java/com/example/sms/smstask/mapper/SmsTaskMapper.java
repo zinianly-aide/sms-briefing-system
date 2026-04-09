@@ -7,6 +7,7 @@ import java.util.List;
 
 @Mapper
 public interface SmsTaskMapper {
+    @Select("SELECT * FROM send_task ORDER BY id DESC")
     List<SmsTask> selectAll();
 
     @Select("SELECT * FROM send_task WHERE id = #{id}")

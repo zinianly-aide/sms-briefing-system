@@ -7,6 +7,7 @@ import java.util.List;
 
 @Mapper
 public interface BriefingMapper {
+    @Select("SELECT * FROM briefing ORDER BY id DESC")
     List<Briefing> selectAll();
 
     @Select("SELECT * FROM briefing WHERE id = #{id}")

@@ -7,6 +7,7 @@ import java.util.List;
 
 @Mapper
 public interface GroupMapper {
+    @Select("SELECT * FROM contact_group ORDER BY id DESC")
     List<ContactGroup> selectAll();
 
     @Select("SELECT * FROM contact_group WHERE id = #{id}")

@@ -8,6 +8,7 @@ import java.util.List;
 public interface ContactMapper {
     
     // 查询所有联系人
+    @Select("SELECT * FROM contact ORDER BY id DESC")
     List<ContactEntity> selectAll();
     
     // 根据ID查询联系人
@@ -32,9 +33,11 @@ public interface ContactMapper {
     int deleteById(@Param("id") Long id);
     
     // 根据部门查询联系人
+    @Select("SELECT * FROM contact WHERE department = #{department} ORDER BY id DESC")
     List<ContactEntity> selectByDepartment(@Param("department") String department);
     
     // 根据状态查询联系人
+    @Select("SELECT * FROM contact WHERE status = #{status} ORDER BY id DESC")
     List<ContactEntity> selectByStatus(@Param("status") String status);
     
     // 模糊查询（姓名或手机号）

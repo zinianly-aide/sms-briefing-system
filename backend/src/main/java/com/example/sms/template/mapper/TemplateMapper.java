@@ -7,6 +7,7 @@ import java.util.List;
 
 @Mapper
 public interface TemplateMapper {
+    @Select("SELECT * FROM briefing_template ORDER BY id DESC")
     List<Template> selectAll();
 
     @Select("SELECT * FROM briefing_template WHERE id = #{id}")
