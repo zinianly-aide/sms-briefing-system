@@ -6,6 +6,7 @@ import ContactsPage from './pages/ContactsPage';
 import DashboardPage from './pages/DashboardPage';
 import GroupsPage from './pages/GroupsPage';
 import TemplatesPage from './pages/TemplatesPage';
+import SendRecordsPage from './pages/SendRecordsPage';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,9 @@ export default function App() {
     }
     if (activePage === 'templates') {
       return <TemplatesPage />;
+    }
+    if (activePage === 'tasks') {
+      return <SendRecordsPage />;
     }
     return <ContactsPage />;
   };
