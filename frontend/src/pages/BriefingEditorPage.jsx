@@ -1,10 +1,30 @@
 import { FileTextOutlined, SendOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, Row, Select, Space, Typography } from 'antd';
-import { useState } from 'react';
+import { Alert, Button, Card, Col, Form, Input, Row, Select, Space, Typography, message } from 'antd';
+import { useEffect, useState } from 'react';
+import { createBriefing } from '../api/briefing';
+import { fetchGroups } from '../api/group';
+import { fetchTemplates } from '../api/template';
 
-export default function BriefingEditorPage({ groups = [], templates = [] }) {
+export default function BriefingEditorPage() {
   const [form] = Form.useForm();
   const [preview, setPreview] = useState('');
+  const [groups, setGroups] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        const [groupData, templateData] = await Promise.all([fetchGroups(), fetchTemplates()]);
+        setGroups(groupData || []);
+        setTemplates(templateData || []);
+      } catch (err) {
+        setError(err.message || '加载选项失败');
+      }
+    };
+    loadOptions();
+  }, []);
 
   const handleTemplateSelect = (templateId) => {
     const tpl = templates.find((t) => t.id === templateId);
@@ -14,13 +34,34 @@ export default function BriefingEditorPage({ groups = [], templates = [] }) {
     }
   };
 
-  const handleFinish = (values) => {
-    console.log('提交简讯:', values);
+  const handleFinish = async (values) => {
+    try {
+      setLoading(true);
+      await createBriefing({
+        title: values.title,
+        content: values.content,
+        templateId: values.templateId,
+        status: values.scheduleType === '立即' ? '待发送' : '待审核',
+        channel: values.channel,
+        author: '当前用户',
+        version: 'V1.0',
+        audience: (values.groupIds || []).join(','),
+        createdBy: '当前用户'
+      });
+      message.success('简讯已提交');
+      form.resetFields();
+      setPreview('');
+    } catch (err) {
+      message.error(err.message || '提交简讯失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Row gutter={[24, 24]}>
       <Col xs={24} xl={14}>
+        {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
         <Card className="soft-card" title="简讯编辑器">
           <Form form={form} layout="vertical" onFinish={handleFinish}>
             <Form.Item label="简讯标题" name="title" rules={[{ required: true, message: '请输入标题' }]}>
@@ -57,7 +98,7 @@ export default function BriefingEditorPage({ groups = [], templates = [] }) {
               <Select options={[{ value: '立即', label: '立即发送' }, { value: '预约', label: '预约发送' }]} />
             </Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit" icon={<SendOutlined />}>
+              <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={loading}>
                 提交审核
               </Button>
               <Button icon={<FileTextOutlined />}>保存草稿</Button>

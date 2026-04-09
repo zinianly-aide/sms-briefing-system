@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import GroupsPage from './pages/GroupsPage';
 import TemplatesPage from './pages/TemplatesPage';
 import SendRecordsPage from './pages/SendRecordsPage';
+import BriefingEditorPage from './pages/BriefingEditorPage';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -51,6 +52,9 @@ export default function App() {
     }
     if (activePage === 'tasks') {
       return <SendRecordsPage />;
+    }
+    if (activePage === 'briefing') {
+      return <BriefingEditorPage />;
     }
     return <ContactsPage />;
   };
