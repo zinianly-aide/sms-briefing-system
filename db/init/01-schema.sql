@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS briefing_template (
     category VARCHAR(64) NOT NULL,
     content TEXT NOT NULL,
     status VARCHAR(32) DEFAULT '启用中',
+    owner VARCHAR(64),
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 

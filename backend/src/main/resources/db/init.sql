@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS briefing_template (
     name VARCHAR(64) NOT NULL,
     category VARCHAR(64) NOT NULL,
     content TEXT NOT NULL,
-    status VARCHAR(32) DEFAULT 'ACTIVE'
+    status VARCHAR(32) DEFAULT 'ACTIVE',
+    owner VARCHAR(64)
 );
 
 CREATE TABLE IF NOT EXISTS briefing (
