@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS contact_group (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(64) NOT NULL,
     owner_dept VARCHAR(64),
-    member_count INT DEFAULT 0
+    member_count INT DEFAULT 0,
+    status VARCHAR(32) DEFAULT '启用'
 );
 
 CREATE TABLE IF NOT EXISTS briefing_template (

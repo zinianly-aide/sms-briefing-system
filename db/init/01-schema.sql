@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS contact_group (
     member_count INT DEFAULT 0,
     tags VARCHAR(512),
     last_sync_time DATETIME,
+    status VARCHAR(32) DEFAULT '启用',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
