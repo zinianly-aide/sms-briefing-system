@@ -4,8 +4,15 @@ frontend/dist/
 
 # backend
 backend/target/
+backend/src/main/resources/application-local.yml
+
+# local env / logs
+.env
+.env.*
+*.log
 
 # IDE/OS
 .DS_Store
 .idea/
+.vscode/
 *.iml

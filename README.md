@@ -9,11 +9,39 @@
 ## 当前进度
 - ✅ 阶段1：补齐系统架构设计文档
 - ✅ 阶段2：搭建可运行前后端基础工程
-- 🚧 阶段3：通讯录 / 群组 / 模板模块开发中
+- ✅ 阶段3：通讯录 / 群组 / 模板接口首版
+- 🚧 阶段4：简讯录入与预览
 
-## 本地启动
+## 目录结构
+```text
+.
+├── frontend/    # React + Vite 前端
+├── backend/     # Spring Boot 后端
+├── docs/        # 架构/计划/决策文档
+├── docker-compose.yml
+└── TODO.md
+```
 
-### Backend
+## 本地开发准备
+
+### 1) 启动 MySQL
+推荐直接使用仓库内的 Docker Compose：
+
+```bash
+docker compose up -d mysql
+```
+
+默认数据库信息：
+- host: `127.0.0.1`
+- port: `3306`
+- database: `sms_briefing`
+- username: `sms_user`
+- password: `sms_pass`
+- root password: `root`
+
+`db/init/01-schema.sql` 会在容器首次启动时自动初始化。
+
+### 2) 启动 Backend
 ```bash
 cd backend
 mvn spring-boot:run
@@ -21,7 +49,22 @@ mvn spring-boot:run
 
 默认端口：`http://localhost:8080`
 
-### Frontend
+支持以下环境变量覆盖：
+- `DB_HOST`
+- `DB_PORT`
+- `DB_NAME`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `SERVER_PORT`
+
+如需保留一份本地样例配置：
+
+```bash
+cd backend
+cp src/main/resources/application-local.example.yml src/main/resources/application-local.yml
+```
+
+### 3) 启动 Frontend
 ```bash
 cd frontend
 npm install
@@ -30,13 +73,18 @@ npm run dev
 
 默认端口：`http://localhost:5173`
 
-## 已实现能力（当前里程碑）
+## 已实现能力
 - 仪表盘聚合接口 `/api/dashboard`
 - 发送任务列表与创建接口 `/api/tasks`
-- Ant Design 运营看板页面
-- 快速创建简讯任务表单
-- 通讯录群组 / 模板 / 任务示例数据展示
+- 通讯录接口 `/api/contacts`（列表、新增）
+- 群组接口 `/api/groups`（列表、新增）
+- 模板接口 `/api/templates`（列表、新增）
+- Ant Design 运营看板页面 + 快速任务创建
 
 ## 文档
 - `docs/project-plan.md`：阶段计划
-- `docs/architecture.md`：架构设计与 API 首版规划
+- `docs/architecture.md`：架构设计与 API 规划
+- `docs/architecture-decisions.md`：架构与本地开发决策记录
+- `backend/README.md`：后端配置说明
+- `db/init/01-schema.sql`：MySQL 初始化脚本
+- `TODO.md`：下一阶段待办
