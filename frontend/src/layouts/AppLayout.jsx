@@ -7,6 +7,7 @@ const items = [
   { key: 'dashboard', icon: <DashboardOutlined />, label: '运营看板' },
   { key: 'contacts', icon: <TeamOutlined />, label: '联系人管理' },
   { key: 'groups', icon: <TeamOutlined />, label: '群组管理' },
+  { key: 'templates', icon: <FileTextOutlined />, label: '模板管理' },
   { key: 'briefing', icon: <FileTextOutlined />, label: '简讯录入' },
   { key: 'tasks', icon: <BellOutlined />, label: '发送任务' }
 ];

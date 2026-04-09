@@ -5,6 +5,7 @@ import AppLayout from './layouts/AppLayout';
 import ContactsPage from './pages/ContactsPage';
 import DashboardPage from './pages/DashboardPage';
 import GroupsPage from './pages/GroupsPage';
+import TemplatesPage from './pages/TemplatesPage';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -43,6 +44,9 @@ export default function App() {
     }
     if (activePage === 'groups') {
       return <GroupsPage />;
+    }
+    if (activePage === 'templates') {
+      return <TemplatesPage />;
     }
     return <ContactsPage />;
   };
