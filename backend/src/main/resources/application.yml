@@ -1,15 +1,18 @@
 spring:
   application:
     name: sms-briefing-backend
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/sms_briefing?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: root
-    password: root
+  profiles:
+    active: dev
 
 server:
   port: 8080
 
 mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.example.sms.*.entity
   configuration:
     map-underscore-to-camel-case: true
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173
