@@ -9,6 +9,7 @@ import TemplatesPage from './pages/TemplatesPage';
 import SendRecordsPage from './pages/SendRecordsPage';
 import BriefingEditorPage from './pages/BriefingEditorPage';
 import BriefingDetailPage from './pages/BriefingDetailPage';
+import BriefingListPage from './pages/BriefingListPage';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -16,6 +17,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [activePage, setActivePage] = useState('contacts');
   const [currentBriefingId, setCurrentBriefingId] = useState(null);
+  const [briefingView, setBriefingView] = useState('list');
 
   const loadDashboard = async () => {
     try {
@@ -56,11 +58,19 @@ export default function App() {
       return <SendRecordsPage />;
     }
     if (activePage === 'briefing') {
-      return currentBriefingId ? (
-        <BriefingDetailPage briefingId={currentBriefingId} onBack={() => setCurrentBriefingId(null)} />
-      ) : (
-        <BriefingEditorPage onCreated={(created) => setCurrentBriefingId(created?.id)} />
-      );
+      if (briefingView === 'detail' && currentBriefingId) {
+        return <BriefingDetailPage briefingId={currentBriefingId} onBack={() => setBriefingView('list')} />;
+      }
+      if (briefingView === 'editor') {
+        return <BriefingEditorPage onCreated={(created) => {
+          setCurrentBriefingId(created?.id);
+          setBriefingView('detail');
+        }} />;
+      }
+      return <BriefingListPage onCreate={() => setBriefingView('editor')} onView={(id) => {
+        setCurrentBriefingId(id);
+        setBriefingView('detail');
+      }} />;
     }
     return <ContactsPage />;
   };
