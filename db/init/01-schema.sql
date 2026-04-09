@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS send_task (
     status VARCHAR(32) NOT NULL,
     recipient_count INT DEFAULT 0,
     creator VARCHAR(64),
+    success_rate VARCHAR(32),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
