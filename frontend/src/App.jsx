@@ -15,7 +15,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [dashboard, setDashboard] = useState(null);
   const [error, setError] = useState('');
-  const [activePage, setActivePage] = useState('contacts');
+  const [activePage, setActivePage] = useState('dashboard');
   const [currentBriefingId, setCurrentBriefingId] = useState(null);
   const [briefingView, setBriefingView] = useState('list');
 
@@ -76,7 +76,13 @@ export default function App() {
   };
 
   return (
-    <AppLayout activeKey={activePage} onNavigate={setActivePage}>
+    <AppLayout activeKey={activePage} onNavigate={(key) => {
+      setActivePage(key);
+      if (key !== 'briefing') {
+        setBriefingView('list');
+        setCurrentBriefingId(null);
+      }
+    }}>
       {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
       {renderPage()}
     </AppLayout>
