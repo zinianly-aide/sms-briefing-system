@@ -4,6 +4,7 @@ import { fetchDashboard } from './api/dashboard';
 import AppLayout from './layouts/AppLayout';
 import ContactsPage from './pages/ContactsPage';
 import DashboardPage from './pages/DashboardPage';
+import GroupsPage from './pages/GroupsPage';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -39,6 +40,9 @@ export default function App() {
     }
     if (activePage === 'dashboard') {
       return loading ? <div className="loading-wrap"><Spin size="large" /></div> : <DashboardPage dashboard={dashboard} onTaskCreated={loadDashboard} />;
+    }
+    if (activePage === 'groups') {
+      return <GroupsPage />;
     }
     return <ContactsPage />;
   };
