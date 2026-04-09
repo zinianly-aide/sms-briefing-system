@@ -10,7 +10,7 @@ const items = [
   { key: 'tasks', icon: <BellOutlined />, label: '发送任务' }
 ];
 
-export default function AppLayout({ children, activeKey = 'dashboard' }) {
+export default function AppLayout({ children, activeKey = 'dashboard', onNavigate }) {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider width={240} theme="light" className="app-sider">
@@ -20,7 +20,7 @@ export default function AppLayout({ children, activeKey = 'dashboard' }) {
           </Typography.Title>
           <Typography.Text type="secondary">短信简讯管理平台</Typography.Text>
         </div>
-        <Menu mode="inline" selectedKeys={[activeKey]} items={items} />
+        <Menu mode="inline" selectedKeys={[activeKey]} items={items} onClick={({ key }) => onNavigate?.(key)} />
       </Sider>
       <Layout>
         <Header className="app-header">

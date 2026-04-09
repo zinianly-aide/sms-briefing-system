@@ -2,12 +2,14 @@ import { Alert, Spin, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { fetchDashboard } from './api/dashboard';
 import AppLayout from './layouts/AppLayout';
+import ContactsPage from './pages/ContactsPage';
 import DashboardPage from './pages/DashboardPage';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [dashboard, setDashboard] = useState(null);
   const [error, setError] = useState('');
+  const [activePage, setActivePage] = useState('contacts');
 
   const loadDashboard = async () => {
     try {
@@ -24,13 +26,27 @@ export default function App() {
   };
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
+    if (activePage === 'dashboard') {
+      loadDashboard();
+    } else {
+      setLoading(false);
+    }
+  }, [activePage]);
+
+  const renderPage = () => {
+    if (activePage === 'contacts') {
+      return <ContactsPage />;
+    }
+    if (activePage === 'dashboard') {
+      return loading ? <div className="loading-wrap"><Spin size="large" /></div> : <DashboardPage dashboard={dashboard} onTaskCreated={loadDashboard} />;
+    }
+    return <ContactsPage />;
+  };
 
   return (
-    <AppLayout>
+    <AppLayout activeKey={activePage} onNavigate={setActivePage}>
       {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
-      {loading ? <div className="loading-wrap"><Spin size="large" /></div> : <DashboardPage dashboard={dashboard} onTaskCreated={loadDashboard} />}
+      {renderPage()}
     </AppLayout>
   );
 }
