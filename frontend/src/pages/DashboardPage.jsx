@@ -3,9 +3,11 @@ import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import { createTask } from '../api/dashboard';
 import StatCard from '../components/StatCard';
+import { useAuth } from '../context/AuthContext';
 
 export default function DashboardPage({ dashboard, onTaskCreated }) {
   const [form] = Form.useForm();
+  const { displayName } = useAuth();
   const stats = useMemo(() => [
     { title: '联系人总量', value: dashboard?.totalContacts ?? 0, extra: '通讯录已汇聚 HR 数据与手工补录' },
     { title: '启用群组', value: dashboard?.activeGroups ?? 0, extra: '支持部门、标签、值班维度分组' },
@@ -22,7 +24,7 @@ export default function DashboardPage({ dashboard, onTaskCreated }) {
         channel: values.channel,
         status: '待发送',
         recipientCount: 0,
-        creator: '当前用户',
+        creator: displayName,
         successRate: '—'
       };
       await createTask(payload);

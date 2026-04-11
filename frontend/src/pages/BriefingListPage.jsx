@@ -1,6 +1,7 @@
 import { CopyOutlined, DeleteOutlined, EyeOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Popconfirm, Space, Table, Tag, message } from 'antd';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { cloneBriefing, deleteBriefing, fetchBriefings, searchBriefings } from '../api/briefing';
 
 const statusConfig = {
@@ -10,7 +11,8 @@ const statusConfig = {
   '草稿': 'default'
 };
 
-export default function BriefingListPage({ onCreate, onView }) {
+export default function BriefingListPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,7 +70,7 @@ export default function BriefingListPage({ onCreate, onView }) {
       width: 160,
       render: (_, record) => (
         <Space size={0}>
-          <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => onView?.(record.id)}>查看</Button>
+          <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => navigate(`/briefings/${record.id}`)}>查看</Button>
           <Button type="link" size="small" icon={<CopyOutlined />} onClick={() => handleClone(record.id)}>复制</Button>
           <Popconfirm title="确认删除该简讯？" onConfirm={() => handleDelete(record.id)}>
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
@@ -94,7 +96,7 @@ export default function BriefingListPage({ onCreate, onView }) {
             />
             <Button type="primary" icon={<SearchOutlined />} onClick={() => loadBriefings(searchText)}>查询</Button>
           </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>新建简讯</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/briefings/new')}>新建简讯</Button>
         </div>
       </Card>
       <Card className="soft-card" bordered={false}>

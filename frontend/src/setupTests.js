@@ -14,3 +14,30 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn()
   }))
 });
+
+// Mock react-router-dom
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => vi.fn(),
+    useParams: () => ({}),
+    useLocation: () => ({ pathname: '/' }),
+    BrowserRouter: ({ children }) => children,
+    Routes: ({ children }) => children,
+    Route: ({ children }) => children,
+    Navigate: () => null,
+  };
+});
+
+// Mock AuthContext
+vi.mock('../context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { username: 'testuser', displayName: '测试用户', role: 'admin' },
+    authenticated: true,
+    displayName: '测试用户',
+    login: vi.fn(),
+    logout: vi.fn(),
+  }),
+  AuthProvider: ({ children }) => children,
+}));
