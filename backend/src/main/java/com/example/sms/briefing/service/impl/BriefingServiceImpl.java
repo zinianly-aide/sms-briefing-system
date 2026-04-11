@@ -1,5 +1,6 @@
 package com.example.sms.briefing.service.impl;
 
+import com.example.sms.common.dto.PageResult;
 import com.example.sms.briefing.entity.Briefing;
 import com.example.sms.briefing.mapper.BriefingMapper;
 import com.example.sms.briefing.service.BriefingService;
@@ -16,6 +17,14 @@ public class BriefingServiceImpl implements BriefingService {
 
     public BriefingServiceImpl(BriefingMapper briefingMapper) {
         this.briefingMapper = briefingMapper;
+    }
+
+    @Override
+    public PageResult<Briefing> listPaged(int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        List<Briefing> list = briefingMapper.selectPage(pageSize, offset);
+        int total = briefingMapper.count();
+        return PageResult.of(list, total, page, pageSize);
     }
 
     @Override
@@ -60,5 +69,16 @@ public class BriefingServiceImpl implements BriefingService {
             return listAll();
         }
         return briefingMapper.search(keyword);
+    }
+
+    @Override
+    public PageResult<Briefing> searchPaged(String keyword, int page, int pageSize) {
+        if (!StringUtils.hasText(keyword)) {
+            return listPaged(page, pageSize);
+        }
+        int offset = (page - 1) * pageSize;
+        List<Briefing> list = briefingMapper.searchPage(keyword, pageSize, offset);
+        int total = briefingMapper.countByKeyword(keyword);
+        return PageResult.of(list, total, page, pageSize);
     }
 }

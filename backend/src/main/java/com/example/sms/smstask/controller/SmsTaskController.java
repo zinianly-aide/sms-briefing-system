@@ -24,8 +24,7 @@ public class SmsTaskController {
     public ApiResponse<PageResult<SmsTask>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {
-        List<SmsTask> list = service.listAll();
-        return ApiResponse.success(PageResult.of(list, list.size(), page, pageSize));
+        return ApiResponse.success(service.listPaged(page, pageSize));
     }
 
     @GetMapping("/{id}")
@@ -54,8 +53,11 @@ public class SmsTaskController {
     }
 
     @GetMapping("/search")
-    public ApiResponse<List<SmsTask>> search(@RequestParam String keyword) {
-        return ApiResponse.success(service.search(keyword));
+    public ApiResponse<PageResult<SmsTask>> search(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ApiResponse.success(service.searchPaged(keyword, page, pageSize));
     }
 
     @PostMapping("/{id}/execute")

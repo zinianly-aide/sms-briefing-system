@@ -1,5 +1,6 @@
 package com.example.sms.contact.service.impl;
 
+import com.example.sms.common.dto.PageResult;
 import com.example.sms.contact.entity.ContactEntity;
 import com.example.sms.contact.mapper.ContactMapper;
 import com.example.sms.contact.service.ContactService;
@@ -25,6 +26,14 @@ public class ContactServiceImpl implements ContactService {
     @Autowired
     private ContactMapper contactMapper;
     
+    @Override
+    public PageResult<ContactEntity> listPaged(int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        List<ContactEntity> list = contactMapper.selectPage(pageSize, offset);
+        int total = contactMapper.count();
+        return PageResult.of(list, total, page, pageSize);
+    }
+
     @Override
     public List<ContactEntity> listAll() {
         return contactMapper.selectAll();
@@ -117,6 +126,17 @@ public class ContactServiceImpl implements ContactService {
             return listAll();
         }
         return contactMapper.searchByKeyword(keyword);
+    }
+
+    @Override
+    public PageResult<ContactEntity> searchPaged(String keyword, int page, int pageSize) {
+        if (!StringUtils.hasText(keyword)) {
+            return listPaged(page, pageSize);
+        }
+        int offset = (page - 1) * pageSize;
+        List<ContactEntity> list = contactMapper.searchByKeywordPage(keyword, pageSize, offset);
+        int total = contactMapper.countByKeyword(keyword);
+        return PageResult.of(list, total, page, pageSize);
     }
 
     @Override

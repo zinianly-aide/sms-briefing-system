@@ -1,5 +1,6 @@
 package com.example.sms.template.service.impl;
 
+import com.example.sms.common.dto.PageResult;
 import com.example.sms.template.entity.Template;
 import com.example.sms.template.mapper.TemplateMapper;
 import com.example.sms.template.service.TemplateService;
@@ -16,6 +17,14 @@ public class TemplateServiceImpl implements TemplateService {
 
     public TemplateServiceImpl(TemplateMapper templateMapper) {
         this.templateMapper = templateMapper;
+    }
+
+    @Override
+    public PageResult<Template> listPaged(int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        List<Template> list = templateMapper.selectPage(pageSize, offset);
+        int total = templateMapper.count();
+        return PageResult.of(list, total, page, pageSize);
     }
 
     @Override
@@ -60,5 +69,16 @@ public class TemplateServiceImpl implements TemplateService {
             return listAll();
         }
         return templateMapper.search(keyword);
+    }
+
+    @Override
+    public PageResult<Template> searchPaged(String keyword, int page, int pageSize) {
+        if (!StringUtils.hasText(keyword)) {
+            return listPaged(page, pageSize);
+        }
+        int offset = (page - 1) * pageSize;
+        List<Template> list = templateMapper.searchPage(keyword, pageSize, offset);
+        int total = templateMapper.countByKeyword(keyword);
+        return PageResult.of(list, total, page, pageSize);
     }
 }

@@ -22,8 +22,7 @@ public class TemplateController {
     public ApiResponse<PageResult<Template>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {
-        List<Template> list = service.listAll();
-        return ApiResponse.success(PageResult.of(list, list.size(), page, pageSize));
+        return ApiResponse.success(service.listPaged(page, pageSize));
     }
 
     @GetMapping("/{id}")
@@ -52,7 +51,10 @@ public class TemplateController {
     }
 
     @GetMapping("/search")
-    public ApiResponse<List<Template>> search(@RequestParam String keyword) {
-        return ApiResponse.success(service.search(keyword));
+    public ApiResponse<PageResult<Template>> search(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ApiResponse.success(service.searchPaged(keyword, page, pageSize));
     }
 }

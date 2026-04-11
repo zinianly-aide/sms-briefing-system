@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8082/api';
+import { API_BASE } from './client';
 
 export function login(username, password) {
   return fetch(`${API_BASE}/auth/login`, {

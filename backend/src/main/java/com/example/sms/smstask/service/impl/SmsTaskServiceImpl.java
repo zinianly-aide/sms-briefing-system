@@ -1,5 +1,6 @@
 package com.example.sms.smstask.service.impl;
 
+import com.example.sms.common.dto.PageResult;
 import com.example.sms.smstask.entity.SmsTask;
 import com.example.sms.smstask.entity.SmsTaskRecipient;
 import com.example.sms.smstask.mapper.SmsTaskMapper;
@@ -31,6 +32,14 @@ public class SmsTaskServiceImpl implements SmsTaskService {
         this.smsTaskMapper = smsTaskMapper;
         this.recipientMapper = recipientMapper;
         this.smsGatewayService = smsGatewayService;
+    }
+
+    @Override
+    public PageResult<SmsTask> listPaged(int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        List<SmsTask> list = smsTaskMapper.selectPage(pageSize, offset);
+        int total = smsTaskMapper.count();
+        return PageResult.of(list, total, page, pageSize);
     }
 
     @Override
@@ -76,6 +85,17 @@ public class SmsTaskServiceImpl implements SmsTaskService {
             return listAll();
         }
         return smsTaskMapper.search(keyword);
+    }
+
+    @Override
+    public PageResult<SmsTask> searchPaged(String keyword, int page, int pageSize) {
+        if (!StringUtils.hasText(keyword)) {
+            return listPaged(page, pageSize);
+        }
+        int offset = (page - 1) * pageSize;
+        List<SmsTask> list = smsTaskMapper.searchPage(keyword, pageSize, offset);
+        int total = smsTaskMapper.countByKeyword(keyword);
+        return PageResult.of(list, total, page, pageSize);
     }
 
     @Override

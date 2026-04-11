@@ -1,13 +1,13 @@
 package com.example.sms.contact.service;
 
+import com.example.sms.common.dto.PageResult;
 import com.example.sms.contact.entity.ContactEntity;
 import java.util.List;
 
 public interface ContactService {
-    
-    /**
-     * 获取所有联系人列表
-     */
+
+    PageResult<ContactEntity> listPaged(int page, int pageSize);
+
     List<ContactEntity> listAll();
     
     /**
@@ -49,6 +49,8 @@ public interface ContactService {
      * 搜索联系人（姓名或手机号模糊匹配）
      */
     List<ContactEntity> search(String keyword);
+
+    PageResult<ContactEntity> searchPaged(String keyword, int page, int pageSize);
 
     /**
      * 批量导入联系人（CSV），返回 {success: 成功数, fail: 失败数, errors: 错误明细}

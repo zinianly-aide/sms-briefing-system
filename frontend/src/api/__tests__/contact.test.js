@@ -1,6 +1,6 @@
 import { fetchContacts, createContact, updateContact, deleteContact, searchContacts } from '../contact';
 
-const API_BASE = 'http://localhost:8082/api';
+const API_BASE = '/api';
 
 function mockFetch(data, ok = true) {
   global.fetch = vi.fn(() =>

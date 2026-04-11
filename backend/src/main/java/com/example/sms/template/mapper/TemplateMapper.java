@@ -26,6 +26,12 @@ public interface TemplateMapper {
     @Select("SELECT * FROM briefing_template WHERE name LIKE CONCAT('%', #{keyword}, '%') OR category LIKE CONCAT('%', #{keyword}, '%')")
     List<Template> search(@Param("keyword") String keyword);
 
+    @Select("SELECT * FROM briefing_template WHERE name LIKE CONCAT('%', #{keyword}, '%') OR category LIKE CONCAT('%', #{keyword}, '%') ORDER BY id DESC LIMIT #{pageSize} OFFSET #{offset}")
+    List<Template> searchPage(@Param("keyword") String keyword, @Param("pageSize") int pageSize, @Param("offset") int offset);
+
+    @Select("SELECT COUNT(*) FROM briefing_template WHERE name LIKE CONCAT('%', #{keyword}, '%') OR category LIKE CONCAT('%', #{keyword}, '%')")
+    int countByKeyword(@Param("keyword") String keyword);
+
     @Select("SELECT * FROM briefing_template ORDER BY id DESC LIMIT #{pageSize} OFFSET #{offset}")
     List<Template> selectPage(@Param("pageSize") int pageSize, @Param("offset") int offset);
 

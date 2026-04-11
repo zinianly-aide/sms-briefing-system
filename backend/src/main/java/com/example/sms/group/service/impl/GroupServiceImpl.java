@@ -1,5 +1,6 @@
 package com.example.sms.group.service.impl;
 
+import com.example.sms.common.dto.PageResult;
 import com.example.sms.group.entity.ContactGroup;
 import com.example.sms.group.mapper.GroupMapper;
 import com.example.sms.group.service.GroupService;
@@ -16,6 +17,14 @@ public class GroupServiceImpl implements GroupService {
 
     public GroupServiceImpl(GroupMapper groupMapper) {
         this.groupMapper = groupMapper;
+    }
+
+    @Override
+    public PageResult<ContactGroup> listPaged(int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        List<ContactGroup> list = groupMapper.selectPage(pageSize, offset);
+        int total = groupMapper.count();
+        return PageResult.of(list, total, page, pageSize);
     }
 
     @Override
@@ -61,5 +70,16 @@ public class GroupServiceImpl implements GroupService {
             return listAll();
         }
         return groupMapper.search(keyword);
+    }
+
+    @Override
+    public PageResult<ContactGroup> searchPaged(String keyword, int page, int pageSize) {
+        if (!StringUtils.hasText(keyword)) {
+            return listPaged(page, pageSize);
+        }
+        int offset = (page - 1) * pageSize;
+        List<ContactGroup> list = groupMapper.searchPage(keyword, pageSize, offset);
+        int total = groupMapper.countByKeyword(keyword);
+        return PageResult.of(list, total, page, pageSize);
     }
 }

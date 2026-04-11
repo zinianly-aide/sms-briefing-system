@@ -30,8 +30,7 @@ public class ContactModuleController {
     public ApiResponse<PageResult<ContactEntity>> listAll(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {
-        List<ContactEntity> list = service.listAll();
-        return ApiResponse.success(PageResult.of(list, list.size(), page, pageSize));
+        return ApiResponse.success(service.listPaged(page, pageSize));
     }
     
     /**
@@ -108,8 +107,11 @@ public class ContactModuleController {
      * 搜索联系人
      */
     @GetMapping("/search")
-    public ApiResponse<List<ContactEntity>> search(@RequestParam String keyword) {
-        return ApiResponse.success(service.search(keyword));
+    public ApiResponse<PageResult<ContactEntity>> search(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ApiResponse.success(service.searchPaged(keyword, page, pageSize));
     }
 
     /**
