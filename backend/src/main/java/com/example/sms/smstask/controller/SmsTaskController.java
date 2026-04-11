@@ -62,23 +62,15 @@ public class SmsTaskController {
 
     @PostMapping("/{id}/execute")
     public ApiResponse<String> executeTask(@PathVariable Long id) {
-        try {
-            service.executeTask(id);
-            return ApiResponse.success("任务已执行");
-        } catch (Exception e) {
-            return ApiResponse.error(500, e.getMessage());
-        }
+        service.executeTask(id);
+        return ApiResponse.success("任务已执行");
     }
 
     @PostMapping("/{id}/cancel")
     public ApiResponse<String> cancelTask(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
-        try {
-            String reason = body != null ? body.get("reason") : "";
-            service.cancelTask(id, reason);
-            return ApiResponse.success("任务已取消");
-        } catch (Exception e) {
-            return ApiResponse.error(500, e.getMessage());
-        }
+        String reason = body != null ? body.get("reason") : "";
+        service.cancelTask(id, reason);
+        return ApiResponse.success("任务已取消");
     }
 
     @GetMapping("/{id}/recipients")

@@ -1,6 +1,7 @@
 package com.example.sms.contact.service.impl;
 
 import com.example.sms.common.dto.PageResult;
+import com.example.sms.common.exception.BusinessException;
 import com.example.sms.contact.entity.ContactEntity;
 import com.example.sms.contact.mapper.ContactMapper;
 import com.example.sms.contact.service.ContactService;
@@ -68,15 +69,15 @@ public class ContactServiceImpl implements ContactService {
         if (result > 0) {
             return contact;
         }
-        throw new RuntimeException("创建联系人失败");
+        throw new BusinessException(500, "创建联系人失败");
     }
-    
+
     @Override
     @Transactional
     public ContactEntity update(ContactEntity contact) {
         ContactEntity existing = getById(contact.getId());
         if (existing == null) {
-            throw new RuntimeException("联系人不存在");
+            throw new BusinessException(404, "联系人不存在");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -95,15 +96,15 @@ public class ContactServiceImpl implements ContactService {
         if (result > 0) {
             return updated;
         }
-        throw new RuntimeException("更新联系人失败");
+        throw new BusinessException(500, "更新联系人失败");
     }
-    
+
     @Override
     @Transactional
     public boolean delete(Long id) {
         ContactEntity existing = getById(id);
         if (existing == null) {
-            throw new RuntimeException("联系人不存在");
+            throw new BusinessException(404, "联系人不存在");
         }
         
         int result = contactMapper.deleteById(id);
@@ -217,7 +218,7 @@ public class ContactServiceImpl implements ContactService {
                 out.write(sb.toString().getBytes(StandardCharsets.UTF_8));
             }
         } catch (IOException e) {
-            throw new RuntimeException("生成CSV失败", e);
+            throw new BusinessException(500, "生成CSV失败");
         }
         return out.toByteArray();
     }

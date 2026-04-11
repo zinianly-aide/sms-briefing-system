@@ -1,6 +1,7 @@
 package com.example.sms.group.service.impl;
 
 import com.example.sms.common.dto.PageResult;
+import com.example.sms.common.exception.BusinessException;
 import com.example.sms.group.entity.ContactGroup;
 import com.example.sms.group.mapper.GroupMapper;
 import com.example.sms.group.service.GroupService;
@@ -51,7 +52,7 @@ public class GroupServiceImpl implements GroupService {
     public ContactGroup update(ContactGroup group) {
         ContactGroup existing = getById(group.getId());
         if (existing == null) {
-            throw new RuntimeException("群组不存在");
+            throw new BusinessException(404, "群组不存在");
         }
         ContactGroup updated = new ContactGroup(group.getId(), group.getName(), group.getOwnerDept(), group.getMemberCount(), group.getTags(), group.getLastSyncTime(), group.getStatus(), existing.getCreatedAt(), LocalDateTime.now());
         groupMapper.update(updated);

@@ -1,6 +1,7 @@
 package com.example.sms.template.service.impl;
 
 import com.example.sms.common.dto.PageResult;
+import com.example.sms.common.exception.BusinessException;
 import com.example.sms.template.entity.Template;
 import com.example.sms.template.mapper.TemplateMapper;
 import com.example.sms.template.service.TemplateService;
@@ -50,7 +51,7 @@ public class TemplateServiceImpl implements TemplateService {
     public Template update(Template template) {
         Template existing = getById(template.getId());
         if (existing == null) {
-            throw new RuntimeException("模板不存在");
+            throw new BusinessException(404, "模板不存在");
         }
         Template updated = new Template(template.getId(), template.getName(), template.getCategory(), template.getContent(), template.getStatus(), template.getOwner(), template.getDefaultGroupIds(), LocalDateTime.now());
         templateMapper.update(updated);

@@ -1,6 +1,7 @@
 package com.example.sms.briefing.service.impl;
 
 import com.example.sms.common.dto.PageResult;
+import com.example.sms.common.exception.BusinessException;
 import com.example.sms.briefing.entity.Briefing;
 import com.example.sms.briefing.mapper.BriefingMapper;
 import com.example.sms.briefing.service.BriefingService;
@@ -50,7 +51,7 @@ public class BriefingServiceImpl implements BriefingService {
     public Briefing update(Briefing briefing) {
         Briefing existing = getById(briefing.getId());
         if (existing == null) {
-            throw new RuntimeException("简讯不存在");
+            throw new BusinessException(404, "简讯不存在");
         }
         Briefing updated = new Briefing(briefing.getId(), briefing.getTitle(), briefing.getContent(), briefing.getTemplateId(), briefing.getStatus(), briefing.getChannel(), briefing.getAuthor(), briefing.getVersion(), briefing.getAudience(), LocalDateTime.now(), briefing.getCreatedBy(), existing.getCreatedAt() != null ? existing.getCreatedAt() : LocalDateTime.now(), briefing.getDisasterType(), briefing.getDisasterLevel(), briefing.getContentPart2(), briefing.getRemark(), briefing.getLegacyPayload());
         briefingMapper.update(updated);

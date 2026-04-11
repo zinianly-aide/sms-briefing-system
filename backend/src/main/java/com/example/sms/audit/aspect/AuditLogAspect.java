@@ -7,11 +7,14 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.security.Principal;
 import java.time.LocalDateTime;
 
 @Aspect
@@ -77,7 +80,14 @@ public class AuditLogAspect {
             else if (path.contains("/hr")) module = "HR同步";
             else if (path.contains("/logs")) module = "审计日志";
 
-            OperationLog opLog = new OperationLog(null, module, action, "系统用户", path, ip, LocalDateTime.now());
+            // Get current user from security context
+            String operator = "匿名用户";
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+                operator = auth.getName();
+            }
+
+            OperationLog opLog = new OperationLog(null, module, action, operator, path, ip, LocalDateTime.now());
             logMapper.insert(opLog);
         } catch (Exception e) {
             log.warn("Failed to save audit log: {}", e.getMessage());
