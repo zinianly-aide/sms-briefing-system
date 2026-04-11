@@ -24,5 +24,46 @@ services:
       timeout: 5s
       retries: 10
 
+  backend:
+    image: maven:3.9.9-eclipse-temurin-17
+    container_name: sms-briefing-backend
+    restart: unless-stopped
+    working_dir: /app/backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: sms_briefing
+      DB_USERNAME: sms_user
+      DB_PASSWORD: sms_pass
+      SERVER_PORT: 8080
+      TZ: Asia/Shanghai
+    volumes:
+      - .:/app
+      - maven_cache:/root/.m2
+    command: mvn spring-boot:run
+    ports:
+      - "8081:8080"
+
+  frontend:
+    image: node:20
+    container_name: sms-briefing-frontend
+    restart: unless-stopped
+    working_dir: /app/frontend
+    depends_on:
+      - backend
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - .:/app
+      - frontend_node_modules:/app/frontend/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+
 volumes:
   mysql_data:
+  maven_cache:
+  frontend_node_modules:

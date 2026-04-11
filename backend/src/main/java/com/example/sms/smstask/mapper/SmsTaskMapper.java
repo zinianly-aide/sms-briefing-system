@@ -25,4 +25,10 @@ public interface SmsTaskMapper {
 
     @Select("SELECT * FROM send_task WHERE title LIKE CONCAT('%', #{keyword}, '%') OR creator LIKE CONCAT('%', #{keyword}, '%')")
     List<SmsTask> search(@Param("keyword") String keyword);
+
+    @Select("SELECT * FROM send_task ORDER BY id DESC LIMIT #{pageSize} OFFSET #{offset}")
+    List<SmsTask> selectPage(@Param("pageSize") int pageSize, @Param("offset") int offset);
+
+    @Select("SELECT COUNT(*) FROM send_task")
+    int count();
 }

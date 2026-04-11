@@ -1,7 +1,8 @@
-import { DeleteOutlined, FilterOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, DatePicker, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, message } from 'antd';
+import { DeleteOutlined, PlayCircleOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, StopOutlined, TeamOutlined } from '@ant-design/icons';
+import { Button, Card, DatePicker, Form, Input, InputNumber, Modal, Popconfirm, Progress, Select, Space, Table, Tag, message } from 'antd';
+import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import { createTask, deleteTask, fetchTasks, searchTasks, updateTask } from '../api/task';
+import { cancelTask, createTask, deleteTask, executeTask, fetchTaskRecipients, fetchTasks, searchTasks, updateTask } from '../api/task';
 
 const defaultForm = {
   title: '',
@@ -20,6 +21,8 @@ export default function SendRecordsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
+  const [recipientModal, setRecipientModal] = useState({ open: false, taskId: null, taskTitle: '' });
+  const [recipients, setRecipients] = useState([]);
 
   const loadTasks = async (keyword) => {
     try {
@@ -54,6 +57,7 @@ export default function SendRecordsPage() {
       const values = await form.validateFields();
       const payload = {
         ...values,
+        plannedSendTime: values.plannedSendTime ? dayjs(values.plannedSendTime).format('YYYY-MM-DDTHH:mm:ss') : '',
         recipientCount: Number(values.recipientCount || 0)
       };
       if (editing) {
@@ -82,8 +86,37 @@ export default function SendRecordsPage() {
     }
   };
 
+  const handleExecute = async (id) => {
+    try {
+      await executeTask(id);
+      message.success('任务已执行');
+      loadTasks(searchText);
+    } catch (err) {
+      message.error(err.message || '执行任务失败');
+    }
+  };
+
+  const handleCancel = async (id) => {
+    try {
+      await cancelTask(id);
+      message.success('任务已取消');
+      loadTasks(searchText);
+    } catch (err) {
+      message.error(err.message || '取消任务失败');
+    }
+  };
+
+  const openRecipients = async (record) => {
+    try {
+      const data = await fetchTaskRecipients(record.id);
+      setRecipients(data || []);
+      setRecipientModal({ open: true, taskId: record.id, taskTitle: record.title });
+    } catch (err) {
+      message.error(err.message || '加载接收人明细失败');
+    }
+  };
+
   const columns = [
-    { title: '任务ID', dataIndex: 'id', width: 100 },
     { title: '任务标题', dataIndex: 'title' },
     { title: '发送渠道', dataIndex: 'channel', width: 100 },
     {
@@ -97,18 +130,38 @@ export default function SendRecordsPage() {
       dataIndex: 'status',
       width: 100,
       render: (status) => {
-        const colorMap = { 已完成: 'green', 待发送: 'blue', 草稿: 'default' };
+        const colorMap = { '已完成': 'green', '待发送': 'blue', '草稿': 'default', '发送中': 'processing', '部分成功': 'warning', '失败': 'red', '已取消': 'default' };
         return <Tag color={colorMap[status] || 'default'}>{status}</Tag>;
       }
     },
     { title: '覆盖人数', dataIndex: 'recipientCount', width: 100 },
-    { title: '成功率', dataIndex: 'successRate', width: 100 },
+    {
+      title: '成功率',
+      dataIndex: 'successRate',
+      width: 140,
+      render: (rate) => {
+        if (rate === '—' || !rate) return <span style={{ color: '#bfbfbf' }}>-</span>;
+        const num = parseFloat(rate);
+        if (isNaN(num)) return rate;
+        const percent = Math.min(Math.max(num, 0), 100);
+        return <Progress percent={percent} size="small" status={percent >= 90 ? 'success' : 'active'} />;
+      }
+    },
     { title: '创建人', dataIndex: 'creator', width: 100 },
     {
       title: '操作',
       width: 140,
       render: (_, record) => (
-        <Space>
+        <Space size={0}>
+          <Button type="link" size="small" icon={<TeamOutlined />} onClick={() => openRecipients(record)}>明细</Button>
+          {(record.status === '待发送' || record.status === '草稿') && (
+            <Button type="link" size="small" icon={<PlayCircleOutlined />} onClick={() => handleExecute(record.id)} style={{ color: '#52c41a' }}>执行</Button>
+          )}
+          {(record.status === '待发送' || record.status === '草稿') && (
+            <Popconfirm title="确认取消该任务？" onConfirm={() => handleCancel(record.id)}>
+              <Button type="link" size="small" icon={<StopOutlined />}>取消</Button>
+            </Popconfirm>
+          )}
           <Button type="link" size="small" onClick={() => openEdit(record)}>编辑</Button>
           <Popconfirm title="确认删除该任务？" onConfirm={() => handleDelete(record.id)}>
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
@@ -124,55 +177,74 @@ export default function SendRecordsPage() {
 
   return (
     <Space direction="vertical" size={16} style={{ width: '100%' }}>
-      <Card className="soft-card" size="small">
-        <Space wrap>
-          <Input
-            placeholder="搜索任务标题/创建人"
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={() => loadTasks(searchText)}
-            style={{ width: 220 }}
-          />
-          <Select placeholder="状态筛选" style={{ width: 120 }} allowClear disabled>
-            <Select.Option value="已完成">已完成</Select.Option>
-            <Select.Option value="待发送">待发送</Select.Option>
-            <Select.Option value="草稿">草稿</Select.Option>
-          </Select>
-          <DatePicker.RangePicker placeholder={['开始日期', '结束日期']} disabled />
-          <Button icon={<FilterOutlined />} disabled>筛选</Button>
-          <Button icon={<ReloadOutlined />} onClick={() => loadTasks(searchText)}>刷新</Button>
-          <Button type="primary" onClick={openCreate}>新建任务</Button>
-        </Space>
+      <Card className="toolbar-card" bordered={false} size="small">
+        <div className="toolbar-inner">
+          <div className="toolbar-left">
+            <Input
+              placeholder="搜索任务标题/创建人"
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onPressEnter={() => loadTasks(searchText)}
+              style={{ width: 240 }}
+              allowClear
+            />
+            <Button type="primary" icon={<SearchOutlined />} onClick={() => loadTasks(searchText)}>查询</Button>
+            <Button icon={<ReloadOutlined />} onClick={() => loadTasks(searchText)}>刷新</Button>
+          </div>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>新建任务</Button>
+        </div>
       </Card>
-      <Card className="soft-card" title="发送记录列表">
-        <Table rowKey="id" loading={loading} dataSource={filtered} columns={columns} pagination={{ pageSize: 10 }} />
+      <Card className="soft-card" bordered={false}>
+        <Table rowKey="id" loading={loading} dataSource={filtered} columns={columns} pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }} size="middle" />
       </Card>
 
-      <Modal title={editing ? '编辑发送任务' : '新建发送任务'} open={open} onOk={handleSubmit} onCancel={() => setOpen(false)} destroyOnClose>
+      <Modal title={editing ? '编辑发送任务' : '新建发送任务'} open={open} onOk={handleSubmit} onCancel={() => setOpen(false)} destroyOnClose okText="确认" cancelText="取消" width={600}>
         <Form form={form} layout="vertical" initialValues={defaultForm}>
           <Form.Item label="任务标题" name="title" rules={[{ required: true, message: '请输入任务标题' }]}>
-            <Input />
+            <Input placeholder="请输入任务标题" />
           </Form.Item>
           <Form.Item label="发送渠道" name="channel">
             <Select options={[{ label: '短信', value: '短信' }, { label: '短信+企微', value: '短信+企微' }]} />
           </Form.Item>
           <Form.Item label="预约时间" name="plannedSendTime">
-            <Input placeholder="例如 2026-04-10T09:00:00" />
+            <DatePicker showTime style={{ width: '100%' }} placeholder="选择预约发送时间" />
           </Form.Item>
           <Form.Item label="状态" name="status">
             <Select options={[{ label: '草稿', value: '草稿' }, { label: '待发送', value: '待发送' }, { label: '已完成', value: '已完成' }]} />
           </Form.Item>
           <Form.Item label="覆盖人数" name="recipientCount">
-            <Input type="number" />
+            <InputNumber min={0} style={{ width: '100%' }} placeholder="0" />
           </Form.Item>
           <Form.Item label="创建人" name="creator">
-            <Input />
+            <Input placeholder="请输入创建人" />
           </Form.Item>
           <Form.Item label="成功率" name="successRate">
-            <Input />
+            <Input placeholder="例如：95 或 95%" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title={`${recipientModal.taskTitle} — 接收人明细`}
+        open={recipientModal.open}
+        onCancel={() => setRecipientModal({ open: false, taskId: null, taskTitle: '' })}
+        footer={<Button onClick={() => setRecipientModal({ open: false, taskId: null, taskTitle: '' })}>关闭</Button>}
+        width={600}
+      >
+        <Table
+          rowKey="id"
+          dataSource={recipients}
+          columns={[
+            { title: '姓名', dataIndex: 'name', width: 100 },
+            { title: '手机号', dataIndex: 'mobile', width: 140 },
+            { title: '状态', dataIndex: 'status', width: 100, render: (s) => <Tag color={s === 'SUCCESS' ? 'green' : 'red'}>{s}</Tag> },
+            { title: '发送时间', dataIndex: 'sentAt', width: 180 },
+            { title: '错误信息', dataIndex: 'errorMsg', ellipsis: true }
+          ]}
+          pagination={false}
+          size="small"
+        />
       </Modal>
     </Space>
   );

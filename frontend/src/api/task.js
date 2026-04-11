@@ -1,8 +1,13 @@
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = 'http://localhost:8082/api';
+
+function authHeaders() {
+  const token = localStorage.getItem('sms_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(), ...(options.headers || {}) },
     ...options
   });
 
@@ -39,4 +44,19 @@ export function deleteTask(id) {
 
 export function searchTasks(keyword) {
   return request(`/tasks/search?keyword=${encodeURIComponent(keyword)}`);
+}
+
+export function executeTask(id) {
+  return request(`/tasks/${id}/execute`, { method: 'POST' });
+}
+
+export function cancelTask(id, reason = '') {
+  return request(`/tasks/${id}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({ reason })
+  });
+}
+
+export function fetchTaskRecipients(id) {
+  return request(`/tasks/${id}/recipients`);
 }

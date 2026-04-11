@@ -31,7 +31,7 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     @Transactional
     public Template create(Template template) {
-        Template created = new Template(null, template.name(), template.category(), template.content(), template.status(), template.owner(), LocalDateTime.now());
+        Template created = new Template(null, template.getName(), template.getCategory(), template.getContent(), template.getStatus(), template.getOwner(), template.getDefaultGroupIds(), LocalDateTime.now());
         templateMapper.insert(created);
         return created;
     }
@@ -39,11 +39,11 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     @Transactional
     public Template update(Template template) {
-        Template existing = getById(template.id());
+        Template existing = getById(template.getId());
         if (existing == null) {
             throw new RuntimeException("模板不存在");
         }
-        Template updated = new Template(template.id(), template.name(), template.category(), template.content(), template.status(), template.owner(), LocalDateTime.now());
+        Template updated = new Template(template.getId(), template.getName(), template.getCategory(), template.getContent(), template.getStatus(), template.getOwner(), template.getDefaultGroupIds(), LocalDateTime.now());
         templateMapper.update(updated);
         return updated;
     }

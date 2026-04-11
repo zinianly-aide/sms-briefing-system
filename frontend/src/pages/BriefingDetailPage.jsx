@@ -1,7 +1,14 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Descriptions, Row, Space, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Col, Descriptions, Row, Space, Spin, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { fetchBriefing } from '../api/briefing';
+
+const statusConfig = {
+  '待审核': 'orange',
+  '待发送': 'blue',
+  '已发送': 'green',
+  '草稿': 'default'
+};
 
 export default function BriefingDetailPage({ briefingId, onBack }) {
   const [briefing, setBriefing] = useState(null);
@@ -30,7 +37,11 @@ export default function BriefingDetailPage({ briefingId, onBack }) {
   }
 
   if (loading) {
-    return <Typography.Text>加载中...</Typography.Text>;
+    return (
+      <div className="loading-wrap">
+        <Spin size="large" tip="加载中..." />
+      </div>
+    );
   }
 
   if (error) {
@@ -43,30 +54,63 @@ export default function BriefingDetailPage({ briefingId, onBack }) {
 
   return (
     <Space direction="vertical" size={20} style={{ width: '100%' }}>
-      <Button type="text" icon={<ArrowLeftOutlined />} onClick={onBack}>返回编辑</Button>
-      <Card className="soft-card" title={briefing.title}>
+      <Button type="text" icon={<ArrowLeftOutlined />} onClick={onBack} style={{ padding: 0 }}>
+        返回列表
+      </Button>
+      <Card className="soft-card" bordered={false} title={briefing.title}>
         <Row gutter={[24, 24]}>
           <Col xs={24} xl={14}>
-            <Descriptions column={1} bordered size="small">
+            <Descriptions column={1} bordered size="small" labelStyle={{ width: 100, fontWeight: 500 }}>
               <Descriptions.Item label="简讯ID">{briefing.id}</Descriptions.Item>
               <Descriptions.Item label="状态">
-                <Tag color="blue">{briefing.status}</Tag>
+                <Tag color={statusConfig[briefing.status] || 'default'}>{briefing.status}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="发送渠道">{briefing.channel}</Descriptions.Item>
-              <Descriptions.Item label="作者">{briefing.author}</Descriptions.Item>
+              <Descriptions.Item label="发送渠道">{briefing.channel || '-'}</Descriptions.Item>
+              <Descriptions.Item label="作者">{briefing.author || '-'}</Descriptions.Item>
               <Descriptions.Item label="更新时间">{briefing.updatedAt || '-'}</Descriptions.Item>
               <Descriptions.Item label="版本">{briefing.version || '-'}</Descriptions.Item>
               <Descriptions.Item label="发送对象">{briefing.audience || '-'}</Descriptions.Item>
+              {briefing.disasterType && <Descriptions.Item label="灾害类别">{briefing.disasterType}</Descriptions.Item>}
+              {briefing.disasterLevel && <Descriptions.Item label="灾害级别">{briefing.disasterLevel}</Descriptions.Item>}
+              {briefing.contentPart2 && (
+                <Descriptions.Item label="补充内容">
+                  <div className="sms-bubble">{briefing.contentPart2}</div>
+                </Descriptions.Item>
+              )}
+              {briefing.remark && <Descriptions.Item label="说明">{briefing.remark}</Descriptions.Item>}
             </Descriptions>
-            <Card className="soft-card" title="简讯正文" style={{ marginTop: 16 }}>
-              <Typography.Paragraph style={{ whiteSpace: 'pre-wrap' }}>{briefing.content}</Typography.Paragraph>
+            <Card
+              className="soft-card"
+              bordered={false}
+              title="简讯正文"
+              style={{ marginTop: 16 }}
+              size="small"
+            >
+              <div className="sms-bubble">{briefing.content}</div>
             </Card>
           </Col>
           <Col xs={24} xl={10}>
-            <Card className="soft-card" title="当前状态">
-              <Typography.Paragraph>当前状态：{briefing.status}</Typography.Paragraph>
-              <Typography.Paragraph>创建人：{briefing.createdBy || briefing.author || '-'}</Typography.Paragraph>
-              <Typography.Paragraph>模板ID：{briefing.templateId || '-'}</Typography.Paragraph>
+            <Card className="soft-card" bordered={false} title="状态信息" size="small">
+              <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                <div>
+                  <Typography.Text type="secondary" style={{ fontSize: 13 }}>当前状态</Typography.Text>
+                  <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>
+                    <Tag color={statusConfig[briefing.status] || 'default'} style={{ fontSize: 14, padding: '2px 8px' }}>{briefing.status}</Tag>
+                  </div>
+                </div>
+                <div>
+                  <Typography.Text type="secondary" style={{ fontSize: 13 }}>创建人</Typography.Text>
+                  <div style={{ marginTop: 2 }}>{briefing.createdBy || briefing.author || '-'}</div>
+                </div>
+                <div>
+                  <Typography.Text type="secondary" style={{ fontSize: 13 }}>关联模板</Typography.Text>
+                  <div style={{ marginTop: 2 }}>{briefing.templateId || '未关联'}</div>
+                </div>
+                <div>
+                  <Typography.Text type="secondary" style={{ fontSize: 13 }}>发送渠道</Typography.Text>
+                  <div style={{ marginTop: 2 }}>{briefing.channel || '-'}</div>
+                </div>
+              </Space>
             </Card>
           </Col>
         </Row>

@@ -32,7 +32,7 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public ContactGroup create(ContactGroup group) {
         LocalDateTime now = LocalDateTime.now();
-        ContactGroup created = new ContactGroup(null, group.name(), group.ownerDept(), group.memberCount() == null ? 0 : group.memberCount(), group.tags(), group.lastSyncTime(), group.status(), now, now);
+        ContactGroup created = new ContactGroup(null, group.getName(), group.getOwnerDept(), group.getMemberCount() == null ? 0 : group.getMemberCount(), group.getTags(), group.getLastSyncTime(), group.getStatus(), now, now);
         groupMapper.insert(created);
         return created;
     }
@@ -40,11 +40,11 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public ContactGroup update(ContactGroup group) {
-        ContactGroup existing = getById(group.id());
+        ContactGroup existing = getById(group.getId());
         if (existing == null) {
             throw new RuntimeException("群组不存在");
         }
-        ContactGroup updated = new ContactGroup(group.id(), group.name(), group.ownerDept(), group.memberCount(), group.tags(), group.lastSyncTime(), group.status(), existing.createdAt(), LocalDateTime.now());
+        ContactGroup updated = new ContactGroup(group.getId(), group.getName(), group.getOwnerDept(), group.getMemberCount(), group.getTags(), group.getLastSyncTime(), group.getStatus(), existing.getCreatedAt(), LocalDateTime.now());
         groupMapper.update(updated);
         return updated;
     }

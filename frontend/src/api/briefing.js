@@ -1,8 +1,13 @@
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = 'http://localhost:8082/api';
+
+function authHeaders() {
+  const token = localStorage.getItem('sms_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...authHeaders(), ...(options.headers || {}) },
     ...options
   });
 
@@ -43,4 +48,8 @@ export function deleteBriefing(id) {
 
 export function searchBriefings(keyword) {
   return request(`/briefings/search?keyword=${encodeURIComponent(keyword)}`);
+}
+
+export function cloneBriefing(id) {
+  return request(`/briefings/${id}/clone`, { method: 'POST' });
 }

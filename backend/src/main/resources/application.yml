@@ -16,3 +16,7 @@ mybatis:
 app:
   cors:
     allowed-origins: http://localhost:5173
+
+sms:
+  mock:
+    success-rate: 85

@@ -43,4 +43,10 @@ public interface ContactMapper {
     // 模糊查询（姓名或手机号）
     @Select("SELECT * FROM contact WHERE name LIKE CONCAT('%', #{keyword}, '%') OR mobile LIKE CONCAT('%', #{keyword}, '%')")
     List<ContactEntity> searchByKeyword(@Param("keyword") String keyword);
+
+    @Select("SELECT * FROM contact ORDER BY id DESC LIMIT #{pageSize} OFFSET #{offset}")
+    List<ContactEntity> selectPage(@Param("pageSize") int pageSize, @Param("offset") int offset);
+
+    @Select("SELECT COUNT(*) FROM contact")
+    int count();
 }

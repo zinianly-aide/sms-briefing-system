@@ -49,4 +49,14 @@ public interface ContactService {
      * 搜索联系人（姓名或手机号模糊匹配）
      */
     List<ContactEntity> search(String keyword);
+
+    /**
+     * 批量导入联系人（CSV），返回 {success: 成功数, fail: 失败数, errors: 错误明细}
+     */
+    java.util.Map<String, Object> importCsv(byte[] csvBytes);
+
+    /**
+     * 导出所有联系人为CSV字节
+     */
+    byte[] exportCsv();
 }

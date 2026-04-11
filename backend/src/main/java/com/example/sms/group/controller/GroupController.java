@@ -1,8 +1,10 @@
 package com.example.sms.group.controller;
 
 import com.example.sms.common.api.ApiResponse;
+import com.example.sms.common.dto.PageResult;
 import com.example.sms.group.entity.ContactGroup;
 import com.example.sms.group.service.GroupService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,8 +19,11 @@ public class GroupController {
     }
 
     @GetMapping
-    public ApiResponse<List<ContactGroup>> list() {
-        return ApiResponse.success(service.listAll());
+    public ApiResponse<PageResult<ContactGroup>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        List<ContactGroup> list = service.listAll();
+        return ApiResponse.success(PageResult.of(list, list.size(), page, pageSize));
     }
 
     @GetMapping("/{id}")
@@ -31,13 +36,13 @@ public class GroupController {
     }
 
     @PostMapping
-    public ApiResponse<ContactGroup> create(@RequestBody ContactGroup group) {
+    public ApiResponse<ContactGroup> create(@Valid @RequestBody ContactGroup group) {
         return ApiResponse.success(service.create(group));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<ContactGroup> update(@PathVariable Long id, @RequestBody ContactGroup group) {
-        ContactGroup payload = new ContactGroup(id, group.name(), group.ownerDept(), group.memberCount(), group.tags(), group.lastSyncTime(), group.status(), group.createdAt(), group.updatedAt());
+    public ApiResponse<ContactGroup> update(@PathVariable Long id, @Valid @RequestBody ContactGroup group) {
+        ContactGroup payload = new ContactGroup(id, group.getName(), group.getOwnerDept(), group.getMemberCount(), group.getTags(), group.getLastSyncTime(), group.getStatus(), group.getCreatedAt(), group.getUpdatedAt());
         return ApiResponse.success(service.update(payload));
     }
 

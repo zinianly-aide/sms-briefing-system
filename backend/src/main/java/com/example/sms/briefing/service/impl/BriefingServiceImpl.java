@@ -31,7 +31,7 @@ public class BriefingServiceImpl implements BriefingService {
     @Override
     @Transactional
     public Briefing create(Briefing briefing) {
-        Briefing created = new Briefing(null, briefing.title(), briefing.content(), briefing.templateId(), briefing.status(), briefing.channel(), briefing.author(), briefing.version(), briefing.audience(), LocalDateTime.now(), briefing.createdBy());
+        Briefing created = new Briefing(null, briefing.getTitle(), briefing.getContent(), briefing.getTemplateId(), briefing.getStatus(), briefing.getChannel(), briefing.getAuthor(), briefing.getVersion(), briefing.getAudience(), LocalDateTime.now(), briefing.getCreatedBy(), LocalDateTime.now(), briefing.getDisasterType(), briefing.getDisasterLevel(), briefing.getContentPart2(), briefing.getRemark(), briefing.getLegacyPayload());
         briefingMapper.insert(created);
         return created;
     }
@@ -39,11 +39,11 @@ public class BriefingServiceImpl implements BriefingService {
     @Override
     @Transactional
     public Briefing update(Briefing briefing) {
-        Briefing existing = getById(briefing.id());
+        Briefing existing = getById(briefing.getId());
         if (existing == null) {
             throw new RuntimeException("简讯不存在");
         }
-        Briefing updated = new Briefing(briefing.id(), briefing.title(), briefing.content(), briefing.templateId(), briefing.status(), briefing.channel(), briefing.author(), briefing.version(), briefing.audience(), LocalDateTime.now(), briefing.createdBy());
+        Briefing updated = new Briefing(briefing.getId(), briefing.getTitle(), briefing.getContent(), briefing.getTemplateId(), briefing.getStatus(), briefing.getChannel(), briefing.getAuthor(), briefing.getVersion(), briefing.getAudience(), LocalDateTime.now(), briefing.getCreatedBy(), existing.getCreatedAt() != null ? existing.getCreatedAt() : LocalDateTime.now(), briefing.getDisasterType(), briefing.getDisasterLevel(), briefing.getContentPart2(), briefing.getRemark(), briefing.getLegacyPayload());
         briefingMapper.update(updated);
         return updated;
     }

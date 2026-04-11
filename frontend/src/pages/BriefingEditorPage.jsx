@@ -1,17 +1,25 @@
-import { FileTextOutlined, SendOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Form, Input, Row, Select, Space, Typography, message } from 'antd';
-import { useEffect, useState } from 'react';
+import { ArrowLeftOutlined, FileTextOutlined, SendOutlined, TeamOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Col, DatePicker, Form, Input, Progress, Row, Select, Space, Typography, message } from 'antd';
+import dayjs from 'dayjs';
+import { useCallback, useEffect, useState } from 'react';
 import { createBriefing } from '../api/briefing';
-import { fetchGroups } from '../api/group';
+import { fetchGroupMembers, fetchGroups } from '../api/group';
 import { fetchTemplates } from '../api/template';
+import ConfirmSendModal from '../components/ConfirmSendModal';
+import RecipientPreview from '../components/RecipientPreview';
 
-export default function BriefingEditorPage({ onCreated }) {
+export default function BriefingEditorPage({ onCreated, onCancel }) {
   const [form] = Form.useForm();
   const [preview, setPreview] = useState('');
   const [groups, setGroups] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [recipients, setRecipients] = useState([]);
+  const [previewData, setPreviewData] = useState(null);
+  const scheduleType = Form.useWatch('scheduleType', form);
+  const selectedGroupIds = Form.useWatch('groupIds', form);
 
   useEffect(() => {
     const loadOptions = async () => {
@@ -34,9 +42,36 @@ export default function BriefingEditorPage({ onCreated }) {
     }
   };
 
+  const resolveRecipients = useCallback(async (groupIds) => {
+    const allMembers = [];
+    for (const gid of groupIds) {
+      try {
+        const members = await fetchGroupMembers(gid);
+        for (const m of (members || [])) {
+          allMembers.push({ name: m.contactName, mobile: m.contactMobile, department: m.contactDepartment, source: groups.find((g) => g.id === gid)?.name || '群组' });
+        }
+      } catch { /* skip failed groups */ }
+    }
+    return allMembers;
+  }, [groups]);
+
+  useEffect(() => {
+    if (!selectedGroupIds || selectedGroupIds.length === 0) {
+      setRecipients([]);
+      return;
+    }
+    resolveRecipients(selectedGroupIds).then(setRecipients).catch(() => setRecipients([]));
+  }, [selectedGroupIds, resolveRecipients]);
+
   const handleFinish = async (values) => {
+    setPreviewData(values);
+    setConfirmModal(true);
+  };
+
+  const handleConfirmSend = async () => {
     try {
       setLoading(true);
+      const values = previewData;
       const created = await createBriefing({
         title: values.title,
         content: values.content,
@@ -46,11 +81,17 @@ export default function BriefingEditorPage({ onCreated }) {
         author: '当前用户',
         version: 'V1.0',
         audience: (values.groupIds || []).join(','),
-        createdBy: '当前用户'
+        createdBy: '当前用户',
+        disasterType: values.disasterType || null,
+        disasterLevel: values.disasterLevel || null,
+        contentPart2: values.contentPart2 || null,
+        remark: values.remark || null,
       });
       message.success('简讯已提交');
+      setConfirmModal(false);
       form.resetFields();
       setPreview('');
+      setRecipients([]);
       onCreated?.(created);
     } catch (err) {
       message.error(err.message || '提交简讯失败');
@@ -59,68 +100,130 @@ export default function BriefingEditorPage({ onCreated }) {
     }
   };
 
+  const charCount = preview.length;
+  const charPercent = Math.round((charCount / 500) * 100);
+
   return (
-    <Row gutter={[24, 24]}>
-      <Col xs={24} xl={14}>
-        {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
-        <Card className="soft-card" title="简讯编辑器">
-          <Form form={form} layout="vertical" onFinish={handleFinish}>
-            <Form.Item label="简讯标题" name="title" rules={[{ required: true, message: '请输入标题' }]}>
-              <Input placeholder="例如：园区暴雨值班提醒" />
-            </Form.Item>
-            <Form.Item label="选择模板" name="templateId">
-              <Select
-                allowClear
-                placeholder="可选：从模板库快速载入"
-                options={templates.map((t) => ({ value: t.id, label: t.name }))}
-                onChange={handleTemplateSelect}
-              />
-            </Form.Item>
-            <Form.Item label="发送内容" name="content" rules={[{ required: true, message: '请输入内容' }]}>
-              <Input.TextArea
-                rows={8}
-                showCount
-                maxLength={500}
-                placeholder="输入短信正文，建议控制在 70 字以内"
-                onChange={(e) => setPreview(e.target.value)}
-              />
-            </Form.Item>
-            <Form.Item label="目标群组" name="groupIds" rules={[{ required: true, message: '请选择群组' }]}>
-              <Select
-                mode="multiple"
-                placeholder="选择发送对象"
-                options={groups.map((g) => ({ value: g.id, label: g.name }))}
-              />
-            </Form.Item>
-            <Form.Item label="发送渠道" name="channel" initialValue="短信">
-              <Select options={[{ value: '短信', label: '短信' }, { value: '短信+企微', label: '短信 + 企微' }]} />
-            </Form.Item>
-            <Form.Item label="调度方式" name="scheduleType" initialValue="立即">
-              <Select options={[{ value: '立即', label: '立即发送' }, { value: '预约', label: '预约发送' }]} />
-            </Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={loading}>
-                提交审核
-              </Button>
-              <Button icon={<FileTextOutlined />}>保存草稿</Button>
-            </Space>
-          </Form>
-        </Card>
-      </Col>
-      <Col xs={24} xl={10}>
-        <Card className="soft-card" title="内容预览">
-          <div className="preview-box">
-            <Typography.Text type="secondary">短信预览</Typography.Text>
-            <div className="preview-content">
-              {preview || <span style={{ color: '#bfbfbf' }}>编辑内容后在此预览</span>}
+    <Space direction="vertical" size={20} style={{ width: '100%' }}>
+      <Button type="text" icon={<ArrowLeftOutlined />} onClick={onCancel} style={{ padding: 0 }}>
+        返回简讯列表
+      </Button>
+
+      <Row gutter={[24, 24]}>
+        <Col xs={24} xl={14}>
+          {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
+          <Card className="soft-card" bordered={false} title="简讯编辑器">
+            <Form form={form} layout="vertical" onFinish={handleFinish}>
+              <Form.Item label="简讯标题" name="title" rules={[{ required: true, message: '请输入标题' }]}>
+                <Input placeholder="例如：园区暴雨值班提醒" />
+              </Form.Item>
+              <Form.Item label="选择模板" name="templateId">
+                <Select
+                  allowClear
+                  placeholder="可选：从模板库快速载入"
+                  options={templates.map((t) => ({ value: t.id, label: t.name }))}
+                  onChange={handleTemplateSelect}
+                />
+              </Form.Item>
+              <Form.Item label="发送内容" name="content" rules={[{ required: true, message: '请输入内容' }]}>
+                <Input.TextArea
+                  rows={8}
+                  showCount
+                  maxLength={500}
+                  placeholder="输入短信正文，建议控制在 70 字以内"
+                  onChange={(e) => setPreview(e.target.value)}
+                />
+              </Form.Item>
+              <Form.Item label="目标群组" name="groupIds" rules={[{ required: true, message: '请选择群组' }]}>
+                <Select
+                  mode="multiple"
+                  placeholder="选择发送对象"
+                  options={groups.map((g) => ({ value: g.id, label: g.name }))}
+                />
+              </Form.Item>
+              <Form.Item label="灾害类别" name="disasterType">
+                <Select
+                  allowClear
+                  placeholder="可选：灾害类别"
+                  options={[
+                    { value: '暴雨', label: '暴雨' },
+                    { value: '台风', label: '台风' },
+                    { value: '洪水', label: '洪水' },
+                    { value: '地震', label: '地震' },
+                    { value: '火灾', label: '火灾' },
+                    { value: '泥石流', label: '泥石流' },
+                    { value: '其他', label: '其他' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item label="灾害级别" name="disasterLevel">
+                <Select
+                  allowClear
+                  placeholder="可选：灾害级别"
+                  options={[
+                    { value: 'Ⅰ级（特别重大）', label: 'Ⅰ级（特别重大）' },
+                    { value: 'Ⅱ级（重大）', label: 'Ⅱ级（重大）' },
+                    { value: 'Ⅲ级（较大）', label: 'Ⅲ级（较大）' },
+                    { value: 'Ⅳ级（一般）', label: 'Ⅳ级（一般）' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item label="补充内容" name="contentPart2">
+                <Input.TextArea rows={4} maxLength={1000} placeholder="可选：补充内容" />
+              </Form.Item>
+              <Form.Item label="发送渠道" name="channel" initialValue="短信">
+                <Select options={[{ value: '短信', label: '短信' }, { value: '短信+企微', label: '短信 + 企微' }]} />
+              </Form.Item>
+              <Form.Item label="调度方式" name="scheduleType" initialValue="立即">
+                <Select options={[{ value: '立即', label: '立即发送' }, { value: '预约', label: '预约发送' }]} />
+              </Form.Item>
+              {scheduleType === '预约' && (
+                <Form.Item label="预约时间" name="scheduledTime" rules={[{ required: true, message: '请选择预约时间' }]}>
+                  <DatePicker showTime style={{ width: '100%' }} placeholder="选择预约发送时间" />
+                </Form.Item>
+              )}
+              <Form.Item label="说明" name="remark">
+                <Input.TextArea rows={2} maxLength={500} placeholder="可选：备注说明" />
+              </Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit" icon={<SendOutlined />} loading={loading}>
+                  提交审核
+                </Button>
+                <Button icon={<FileTextOutlined />}>保存草稿</Button>
+              </Space>
+            </Form>
+          </Card>
+        </Col>
+        <Col xs={24} xl={10}>
+          <Card className="soft-card" bordered={false} title="内容预览">
+            <div className="preview-box">
+              <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>短信预览</div>
+              <div className="preview-content">
+                {preview || <span style={{ color: '#bfbfbf' }}>编辑内容后在此预览</span>}
+              </div>
             </div>
-          </div>
-          <div style={{ marginTop: 16 }}>
-            <Typography.Text type="secondary">字数统计</Typography.Text>
-            <Typography.Title level={4}>{preview.length} / 500</Typography.Title>
-          </div>
-        </Card>
-      </Col>
-    </Row>
+            <div style={{ marginTop: 20 }}>
+              <div style={{ fontSize: 13, color: '#8c8c8c', marginBottom: 8 }}>字数统计</div>
+              <Progress
+                percent={charPercent}
+                format={() => `${charCount} / 500`}
+                strokeColor={charPercent > 80 ? '#ff4d4f' : '#1677ff'}
+                size="small"
+              />
+            </div>
+          </Card>
+          <Card className="soft-card" bordered={false} title={<><TeamOutlined /> 接收人预览</>} style={{ marginTop: 16 }}>
+            <RecipientPreview recipients={recipients} />
+          </Card>
+          <ConfirmSendModal
+            open={confirmModal}
+            briefing={previewData}
+            recipients={recipients}
+            onConfirm={handleConfirmSend}
+            onCancel={() => setConfirmModal(false)}
+          />
+        </Col>
+      </Row>
+    </Space>
   );
 }

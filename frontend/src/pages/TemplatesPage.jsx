@@ -1,5 +1,5 @@
 import { DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, message } from 'antd';
+import { Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, Tooltip, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { createTemplate, deleteTemplate, fetchTemplates, searchTemplates, updateTemplate } from '../api/template';
 
@@ -84,10 +84,18 @@ export default function TemplatesPage() {
   };
 
   const columns = [
-    { title: '模板ID', dataIndex: 'id', width: 100 },
-    { title: '模板名称', dataIndex: 'name' },
+    { title: '模板名称', dataIndex: 'name', width: 160 },
     { title: '分类', dataIndex: 'category', width: 120 },
-    { title: '模板内容', dataIndex: 'content', ellipsis: true },
+    {
+      title: '模板内容',
+      dataIndex: 'content',
+      ellipsis: true,
+      render: (content) => (
+        <Tooltip title={content} placement="topLeft">
+          <span>{content}</span>
+        </Tooltip>
+      )
+    },
     {
       title: '更新时间',
       dataIndex: 'updatedAt',
@@ -121,40 +129,43 @@ export default function TemplatesPage() {
 
   return (
     <Space direction="vertical" size={16} style={{ width: '100%' }}>
-      <Card className="soft-card" size="small">
-        <Space>
-          <Input
-            placeholder="搜索模板名称/分类"
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={() => loadTemplates(searchText)}
-            style={{ width: 240 }}
-          />
-          <Button onClick={() => loadTemplates(searchText)}>查询</Button>
+      <Card className="toolbar-card" bordered={false} size="small">
+        <div className="toolbar-inner">
+          <div className="toolbar-left">
+            <Input
+              placeholder="搜索模板名称/分类"
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onPressEnter={() => loadTemplates(searchText)}
+              style={{ width: 240 }}
+              allowClear
+            />
+            <Button type="primary" icon={<SearchOutlined />} onClick={() => loadTemplates(searchText)}>查询</Button>
+          </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>新建模板</Button>
-        </Space>
+        </div>
       </Card>
-      <Card className="soft-card" title="模板列表">
-        <Table rowKey="id" loading={loading} dataSource={filtered} columns={columns} pagination={{ pageSize: 10 }} />
+      <Card className="soft-card" bordered={false}>
+        <Table rowKey="id" loading={loading} dataSource={filtered} columns={columns} pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }} size="middle" />
       </Card>
 
-      <Modal title={editing ? '编辑模板' : '新建模板'} open={open} onOk={handleSubmit} onCancel={() => setOpen(false)} destroyOnClose width={720}>
+      <Modal title={editing ? '编辑模板' : '新建模板'} open={open} onOk={handleSubmit} onCancel={() => setOpen(false)} destroyOnClose width={720} okText="确认" cancelText="取消">
         <Form form={form} layout="vertical" initialValues={defaultForm}>
           <Form.Item label="模板名称" name="name" rules={[{ required: true, message: '请输入模板名称' }]}>
-            <Input />
+            <Input placeholder="请输入模板名称" />
           </Form.Item>
           <Form.Item label="分类" name="category" rules={[{ required: true, message: '请输入分类' }]}>
-            <Input />
+            <Input placeholder="请输入分类" />
           </Form.Item>
           <Form.Item label="模板内容" name="content" rules={[{ required: true, message: '请输入模板内容' }]}>
-            <Input.TextArea rows={5} />
+            <Input.TextArea rows={5} showCount maxLength={500} placeholder="请输入模板内容" />
           </Form.Item>
           <Form.Item label="状态" name="status">
             <Select options={[{ label: '启用中', value: '启用中' }, { label: '草稿', value: '草稿' }]} />
           </Form.Item>
           <Form.Item label="维护人" name="owner">
-            <Input />
+            <Input placeholder="请输入维护人" />
           </Form.Item>
         </Form>
       </Modal>

@@ -8,8 +8,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ContactServiceImpl implements ContactService {
@@ -38,11 +46,11 @@ public class ContactServiceImpl implements ContactService {
         LocalDateTime now = LocalDateTime.now();
         contact = new ContactEntity(
             null, // ID 由数据库生成
-            contact.name(),
-            contact.mobile(),
-            contact.department(),
-            contact.title(),
-            contact.status(),
+            contact.getName(),
+            contact.getMobile(),
+            contact.getDepartment(),
+            contact.getTitle(),
+            contact.getStatus(),
             now,
             now
         );
@@ -57,20 +65,20 @@ public class ContactServiceImpl implements ContactService {
     @Override
     @Transactional
     public ContactEntity update(ContactEntity contact) {
-        ContactEntity existing = getById(contact.id());
+        ContactEntity existing = getById(contact.getId());
         if (existing == null) {
             throw new RuntimeException("联系人不存在");
         }
-        
+
         LocalDateTime now = LocalDateTime.now();
         ContactEntity updated = new ContactEntity(
-            contact.id(),
-            contact.name(),
-            contact.mobile(),
-            contact.department(),
-            contact.title(),
-            contact.status(),
-            existing.createdAt(),
+            contact.getId(),
+            contact.getName(),
+            contact.getMobile(),
+            contact.getDepartment(),
+            contact.getTitle(),
+            contact.getStatus(),
+            existing.getCreatedAt(),
             now
         );
         
@@ -109,5 +117,88 @@ public class ContactServiceImpl implements ContactService {
             return listAll();
         }
         return contactMapper.searchByKeyword(keyword);
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> importCsv(byte[] csvBytes) {
+        int success = 0;
+        int fail = 0;
+        List<String> errors = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new java.io.ByteArrayInputStream(csvBytes), StandardCharsets.UTF_8))) {
+            String header = reader.readLine();
+            if (header == null) {
+                return Map.of("success", 0, "fail", 0, "errors", List.of("文件为空"));
+            }
+
+            String line;
+            int rowNum = 1;
+            while ((line = reader.readLine()) != null) {
+                rowNum++;
+                String[] parts = line.split(",", -1);
+                try {
+                    if (parts.length < 2) {
+                        errors.add("第" + rowNum + "行: 列数不足");
+                        fail++;
+                        continue;
+                    }
+                    String name = parts[0].trim();
+                    String mobile = parts[1].trim();
+                    String department = parts.length > 2 ? parts[2].trim() : "";
+                    String title = parts.length > 3 ? parts[3].trim() : "";
+
+                    if (!StringUtils.hasText(name)) {
+                        errors.add("第" + rowNum + "行: 姓名为空");
+                        fail++;
+                        continue;
+                    }
+                    if (!mobile.matches("^1[3-9]\\d{9}$")) {
+                        errors.add("第" + rowNum + "行: 手机号格式不正确 - " + mobile);
+                        fail++;
+                        continue;
+                    }
+
+                    ContactEntity contact = new ContactEntity(null, name, mobile,
+                        StringUtils.hasText(department) ? department : null,
+                        StringUtils.hasText(title) ? title : null,
+                        "active", LocalDateTime.now(), LocalDateTime.now());
+                    contactMapper.insert(contact);
+                    success++;
+                } catch (Exception e) {
+                    errors.add("第" + rowNum + "行: " + e.getMessage());
+                    fail++;
+                }
+            }
+        } catch (IOException e) {
+            return Map.of("success", 0, "fail", 0, "errors", List.of("文件读取失败: " + e.getMessage()));
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", success);
+        result.put("fail", fail);
+        result.put("errors", errors);
+        return result;
+    }
+
+    @Override
+    public byte[] exportCsv() {
+        List<ContactEntity> contacts = listAll();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            out.write("姓名,手机号,部门,职位,状态\n".getBytes(StandardCharsets.UTF_8));
+            for (ContactEntity c : contacts) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(c.getName() != null ? c.getName() : "").append(",");
+                sb.append(c.getMobile() != null ? c.getMobile() : "").append(",");
+                sb.append(c.getDepartment() != null ? c.getDepartment() : "").append(",");
+                sb.append(c.getTitle() != null ? c.getTitle() : "").append(",");
+                sb.append(c.getStatus() != null ? c.getStatus() : "active").append("\n");
+                out.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("生成CSV失败", e);
+        }
+        return out.toByteArray();
     }
 }

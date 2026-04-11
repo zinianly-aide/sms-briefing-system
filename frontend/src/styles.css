@@ -12,30 +12,185 @@ body {
   background: linear-gradient(180deg, #f5f7fb 0%, #eef3ff 100%);
 }
 
+/* ========== Sidebar ========== */
 .app-sider {
   border-right: 1px solid rgba(5, 5, 5, 0.06);
 }
 
-.brand-block {
-  padding: 24px;
+.app-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
+.brand-block {
+  padding: 20px 24px 16px;
+  background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.brand-block .ant-typography {
+  color: #fff !important;
+}
+
+.brand-block h4 {
+  color: #fff;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+}
+
+.brand-block .ant-typography:last-child {
+  opacity: 0.85;
+  font-size: 12px;
+}
+
+.app-sider .ant-menu {
+  border-inline-end: none !important;
+  flex: 1;
+}
+
+.app-sider .ant-menu-item {
+  margin: 4px 8px;
+  border-radius: 8px;
+}
+
+.app-sider .ant-menu-item-selected {
+  background: #e6f4ff !important;
+  color: #1677ff !important;
+  position: relative;
+}
+
+.app-sider .ant-menu-item-selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: #1677ff;
+  border-radius: 0 3px 3px 0;
+}
+
+.sider-footer {
+  padding: 12px 24px;
+  border-top: 1px solid rgba(5, 5, 5, 0.06);
+  font-size: 11px;
+  color: #bfbfbf;
+}
+
+/* ========== Header ========== */
 .app-header {
-  padding: 24px 32px 0;
+  padding: 20px 32px 0;
   background: transparent;
   height: auto;
   line-height: 1.4;
 }
 
+.app-header .ant-typography {
+  color: #8c8c8c !important;
+  font-size: 13px;
+}
+
+.app-header h3 {
+  color: #1f1f1f;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* ========== Content ========== */
 .app-content {
-  padding: 24px 32px 32px;
+  padding: 20px 32px 32px;
 }
 
+/* ========== Cards ========== */
 .soft-card {
-  border-radius: 18px;
-  box-shadow: 0 12px 30px rgba(31, 35, 41, 0.06);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.04), 0 1px 2px rgba(31, 35, 41, 0.06);
+  border: 1px solid rgba(5, 5, 5, 0.04);
+  transition: box-shadow 0.2s ease;
 }
 
+.soft-card:hover {
+  box-shadow: 0 4px 12px rgba(31, 35, 41, 0.08), 0 2px 4px rgba(31, 35, 41, 0.04);
+}
+
+.soft-card .ant-card-head {
+  border-bottom: 1px solid rgba(5, 5, 5, 0.04);
+}
+
+.soft-card .ant-card-head-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* ========== Stat Cards ========== */
+.stat-card {
+  border-radius: 12px;
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(31, 35, 41, 0.1);
+}
+
+.stat-card .ant-statistic-title {
+  font-size: 13px;
+  color: #8c8c8c;
+}
+
+.stat-card .ant-statistic-content-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+/* ========== Tables ========== */
+.ant-table {
+  border-radius: 8px;
+}
+
+.ant-table-thead > tr > th {
+  background: #fafafa !important;
+  font-weight: 600;
+  font-size: 13px;
+  color: #595959;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: #f0f5ff !important;
+}
+
+/* ========== Toolbar Cards ========== */
+.toolbar-card {
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.04);
+  border: 1px solid rgba(5, 5, 5, 0.04);
+}
+
+.toolbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ========== Search Input ========== */
+.ant-input-affix-wrapper {
+  border-radius: 8px;
+}
+
+/* ========== Loading ========== */
 .loading-wrap {
   min-height: 60vh;
   display: flex;
@@ -43,8 +198,110 @@ body {
   justify-content: center;
 }
 
+/* ========== Preview Box (SMS) ========== */
+.preview-box {
+  background: linear-gradient(135deg, #f5f7fb 0%, #eef3ff 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 12px;
+  border: 1px solid rgba(5, 5, 5, 0.04);
+}
+
+.preview-content {
+  margin-top: 12px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 80px;
+  line-height: 1.8;
+  font-size: 14px;
+  box-shadow: 0 1px 3px rgba(31, 35, 41, 0.04);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ========== SMS Bubble (Detail Page) ========== */
+.sms-bubble {
+  background: linear-gradient(135deg, #e6f4ff 0%, #f0f5ff 100%);
+  border-radius: 0 12px 12px 12px;
+  padding: 16px 20px;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  max-width: 500px;
+  border-left: 3px solid #1677ff;
+}
+
+/* ========== Quick Action Card ========== */
+.quick-action-card {
+  border-radius: 12px;
+  border: 1px dashed rgba(22, 119, 255, 0.3);
+  background: linear-gradient(135deg, #f0f5ff 0%, #f5f7fb 100%);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  padding: 16px;
+}
+
+.quick-action-card:hover {
+  border-color: #1677ff;
+  background: linear-gradient(135deg, #e6f4ff 0%, #f0f5ff 100%);
+}
+
+.quick-action-card .anticon {
+  font-size: 24px;
+  color: #1677ff;
+  margin-bottom: 8px;
+}
+
+/* ========== Highlight List ========== */
 .highlight-list {
   margin: 0;
   padding-left: 18px;
   line-height: 1.9;
+}
+
+.highlight-list li {
+  color: #595959;
+}
+
+/* ========== Breadcrumb ========== */
+.page-breadcrumb {
+  margin-bottom: 16px;
+}
+
+/* ========== Page Title ========== */
+.page-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.page-title-bar h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* ========== Misc ========== */
+.ant-tag {
+  border-radius: 6px;
+}
+
+.ant-btn-primary {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.ant-modal .ant-modal-header {
+  border-radius: 12px 12px 0 0;
+}
+
+.ant-modal .ant-modal-content {
+  border-radius: 12px;
+}
+
+.ant-progress-inner {
+  border-radius: 100px;
 }

@@ -25,4 +25,10 @@ public interface GroupMapper {
 
     @Select("SELECT * FROM contact_group WHERE name LIKE CONCAT('%', #{keyword}, '%') OR owner_dept LIKE CONCAT('%', #{keyword}, '%')")
     List<ContactGroup> search(@Param("keyword") String keyword);
+
+    @Select("SELECT * FROM contact_group ORDER BY id DESC LIMIT #{pageSize} OFFSET #{offset}")
+    List<ContactGroup> selectPage(@Param("pageSize") int pageSize, @Param("offset") int offset);
+
+    @Select("SELECT COUNT(*) FROM contact_group")
+    int count();
 }

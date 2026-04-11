@@ -1,11 +1,15 @@
 package com.example.sms.smstask.controller;
 
 import com.example.sms.common.api.ApiResponse;
+import com.example.sms.common.dto.PageResult;
 import com.example.sms.smstask.entity.SmsTask;
+import com.example.sms.smstask.entity.SmsTaskRecipient;
 import com.example.sms.smstask.service.SmsTaskService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping({"/api/tasks", "/api/sms-tasks"})
@@ -17,8 +21,11 @@ public class SmsTaskController {
     }
 
     @GetMapping
-    public ApiResponse<List<SmsTask>> list() {
-        return ApiResponse.success(service.listAll());
+    public ApiResponse<PageResult<SmsTask>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        List<SmsTask> list = service.listAll();
+        return ApiResponse.success(PageResult.of(list, list.size(), page, pageSize));
     }
 
     @GetMapping("/{id}")
@@ -31,13 +38,13 @@ public class SmsTaskController {
     }
 
     @PostMapping
-    public ApiResponse<SmsTask> create(@RequestBody SmsTask task) {
+    public ApiResponse<SmsTask> create(@Valid @RequestBody SmsTask task) {
         return ApiResponse.success(service.create(task));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<SmsTask> update(@PathVariable Long id, @RequestBody SmsTask task) {
-        SmsTask payload = new SmsTask(id, task.title(), task.channel(), task.plannedSendTime(), task.status(), task.recipientCount(), task.creator(), task.successRate(), task.createdAt(), task.updatedAt());
+    public ApiResponse<SmsTask> update(@PathVariable Long id, @Valid @RequestBody SmsTask task) {
+        SmsTask payload = new SmsTask(id, task.getTitle(), task.getChannel(), task.getPlannedSendTime(), task.getStatus(), task.getRecipientCount(), task.getCreator(), task.getSuccessRate(), task.getCreatedAt(), task.getUpdatedAt());
         return ApiResponse.success(service.update(payload));
     }
 
@@ -49,5 +56,31 @@ public class SmsTaskController {
     @GetMapping("/search")
     public ApiResponse<List<SmsTask>> search(@RequestParam String keyword) {
         return ApiResponse.success(service.search(keyword));
+    }
+
+    @PostMapping("/{id}/execute")
+    public ApiResponse<String> executeTask(@PathVariable Long id) {
+        try {
+            service.executeTask(id);
+            return ApiResponse.success("任务已执行");
+        } catch (Exception e) {
+            return ApiResponse.error(500, e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ApiResponse<String> cancelTask(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
+        try {
+            String reason = body != null ? body.get("reason") : "";
+            service.cancelTask(id, reason);
+            return ApiResponse.success("任务已取消");
+        } catch (Exception e) {
+            return ApiResponse.error(500, e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/recipients")
+    public ApiResponse<List<SmsTaskRecipient>> getRecipients(@PathVariable Long id) {
+        return ApiResponse.success(service.getRecipients(id));
     }
 }

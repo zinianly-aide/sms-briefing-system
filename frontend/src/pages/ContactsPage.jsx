@@ -1,7 +1,7 @@
-import { DeleteOutlined, DownloadOutlined, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
-import { Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, message } from 'antd';
+import { CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, DownloadOutlined, PlusOutlined, SearchOutlined, SyncOutlined, UploadOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, Upload, message } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import { createContact, deleteContact, fetchContacts, searchContacts, updateContact } from '../api/contact';
+import { createContact, deleteContact, exportContacts, fetchContacts, importContacts, searchContacts, syncHrData, updateContact } from '../api/contact';
 
 const defaultForm = {
   name: '',
@@ -11,9 +11,9 @@ const defaultForm = {
   status: 'active'
 };
 
-const statusTextMap = {
-  active: '有效',
-  inactive: '停用'
+const statusConfig = {
+  active: { text: '有效', color: 'green', icon: <CheckCircleOutlined /> },
+  inactive: { text: '停用', color: 'default', icon: <CloseCircleOutlined /> }
 };
 
 export default function ContactsPage() {
@@ -101,9 +101,34 @@ export default function ContactsPage() {
     }
   };
 
+  const handleImport = async (file) => {
+    try {
+      const result = await importContacts(file);
+      const { success: ok, fail: ng, errors } = result;
+      if (ng > 0) {
+        Modal.info({ title: '导入完成', content: `成功 ${ok} 条，失败 ${ng} 条\n${errors?.slice(0, 5).join('\n') || ''}` });
+      } else {
+        message.success(`成功导入 ${ok} 条联系人`);
+      }
+      loadContacts();
+    } catch (err) {
+      message.error(err.message || '导入失败');
+    }
+    return false;
+  };
+
+  const handleSyncHr = async () => {
+    try {
+      const result = await syncHrData();
+      message.success(`同步完成：新增 ${result.synced} 人，跳过 ${result.skipped} 人`);
+      loadContacts();
+    } catch (err) {
+      message.error(err.message || '同步失败');
+    }
+  };
+
   const columns = [
-    { title: '联系人ID', dataIndex: 'id', width: 100 },
-    { title: '姓名', dataIndex: 'name', width: 120 },
+    { title: '姓名', dataIndex: 'name', width: 120, fontWeight: 500 },
     { title: '手机号', dataIndex: 'mobile', width: 150 },
     { title: '部门', dataIndex: 'department', width: 140 },
     { title: '职位', dataIndex: 'title', width: 140 },
@@ -111,7 +136,10 @@ export default function ContactsPage() {
       title: '状态',
       dataIndex: 'status',
       width: 100,
-      render: (status) => <Tag color={status === 'active' ? 'green' : 'default'}>{statusTextMap[status] || status}</Tag>
+      render: (status) => {
+        const cfg = statusConfig[status] || { text: status, color: 'default' };
+        return <Tag color={cfg.color} icon={cfg.icon}>{cfg.text}</Tag>;
+      }
     },
     {
       title: '操作',
@@ -129,32 +157,38 @@ export default function ContactsPage() {
 
   return (
     <Space direction="vertical" size={16} style={{ width: '100%' }}>
-      <Card className="soft-card" size="small">
-        <Space wrap>
-          <Input
-            placeholder="搜索联系人姓名/手机号"
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onPressEnter={() => loadContacts(searchText)}
-            style={{ width: 220 }}
-          />
-          <Select
-            placeholder="部门筛选"
-            style={{ width: 160 }}
-            allowClear
-            options={departmentOptions}
-            value={department}
-            onChange={setDepartment}
-          />
-          <Button onClick={() => loadContacts(searchText)}>查询</Button>
+      <Card className="toolbar-card" bordered={false} size="small">
+        <div className="toolbar-inner">
+          <div className="toolbar-left">
+            <Input
+              placeholder="搜索联系人姓名/手机号"
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onPressEnter={() => loadContacts(searchText)}
+              style={{ width: 240 }}
+              allowClear
+            />
+            <Select
+              placeholder="部门筛选"
+              style={{ width: 160 }}
+              allowClear
+              options={departmentOptions}
+              value={department}
+              onChange={(v) => { setDepartment(v); }}
+            />
+            <Button type="primary" icon={<SearchOutlined />} onClick={() => loadContacts(searchText)}>查询</Button>
+          </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>新建联系人</Button>
-          <Button icon={<UploadOutlined />} disabled>批量导入</Button>
-          <Button icon={<DownloadOutlined />} disabled>导出</Button>
-        </Space>
+          <Upload accept=".csv" showUploadList={false} beforeUpload={handleImport}>
+            <Button icon={<UploadOutlined />}>导入CSV</Button>
+          </Upload>
+          <Button icon={<DownloadOutlined />} onClick={exportContacts}>导出CSV</Button>
+          <Button icon={<SyncOutlined />} onClick={handleSyncHr}>HR同步</Button>
+        </div>
       </Card>
-      <Card className="soft-card" title="通讯录列表">
-        <Table rowKey="id" loading={loading} dataSource={filtered} columns={columns} pagination={{ pageSize: 10 }} />
+      <Card className="soft-card" bordered={false}>
+        <Table rowKey="id" loading={loading} dataSource={filtered} columns={columns} pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }} size="middle" />
       </Card>
 
       <Modal
@@ -163,19 +197,21 @@ export default function ContactsPage() {
         onOk={handleSubmit}
         onCancel={() => setOpen(false)}
         destroyOnClose
+        okText="确认"
+        cancelText="取消"
       >
         <Form form={form} layout="vertical" initialValues={defaultForm}>
           <Form.Item label="姓名" name="name" rules={[{ required: true, message: '请输入姓名' }]}>
-            <Input />
+            <Input placeholder="请输入姓名" />
           </Form.Item>
           <Form.Item label="手机号" name="mobile" rules={[{ required: true, message: '请输入手机号' }]}>
-            <Input />
+            <Input placeholder="请输入手机号" />
           </Form.Item>
           <Form.Item label="部门" name="department">
-            <Input />
+            <Input placeholder="请输入部门" />
           </Form.Item>
           <Form.Item label="职位" name="title">
-            <Input />
+            <Input placeholder="请输入职位" />
           </Form.Item>
           <Form.Item label="状态" name="status">
             <Select options={[{ label: '有效', value: 'active' }, { label: '停用', value: 'inactive' }]} />

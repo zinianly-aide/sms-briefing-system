@@ -3,6 +3,8 @@ package com.example.sms.briefing.controller;
 import com.example.sms.briefing.entity.Briefing;
 import com.example.sms.briefing.service.BriefingService;
 import com.example.sms.common.api.ApiResponse;
+import com.example.sms.common.dto.PageResult;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,8 +19,11 @@ public class BriefingController {
     }
 
     @GetMapping
-    public ApiResponse<List<Briefing>> list() {
-        return ApiResponse.success(service.listAll());
+    public ApiResponse<PageResult<Briefing>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        List<Briefing> list = service.listAll();
+        return ApiResponse.success(PageResult.of(list, list.size(), page, pageSize));
     }
 
     @GetMapping("/{id}")
@@ -31,13 +36,13 @@ public class BriefingController {
     }
 
     @PostMapping
-    public ApiResponse<Briefing> create(@RequestBody Briefing briefing) {
+    public ApiResponse<Briefing> create(@Valid @RequestBody Briefing briefing) {
         return ApiResponse.success(service.create(briefing));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<Briefing> update(@PathVariable Long id, @RequestBody Briefing briefing) {
-        Briefing payload = new Briefing(id, briefing.title(), briefing.content(), briefing.templateId(), briefing.status(), briefing.channel(), briefing.author(), briefing.version(), briefing.audience(), briefing.updatedAt(), briefing.createdBy());
+    public ApiResponse<Briefing> update(@PathVariable Long id, @Valid @RequestBody Briefing briefing) {
+        Briefing payload = new Briefing(id, briefing.getTitle(), briefing.getContent(), briefing.getTemplateId(), briefing.getStatus(), briefing.getChannel(), briefing.getAuthor(), briefing.getVersion(), briefing.getAudience(), briefing.getUpdatedAt(), briefing.getCreatedBy(), briefing.getCreatedAt(), briefing.getDisasterType(), briefing.getDisasterLevel(), briefing.getContentPart2(), briefing.getRemark(), briefing.getLegacyPayload());
         return ApiResponse.success(service.update(payload));
     }
 
@@ -49,5 +54,18 @@ public class BriefingController {
     @GetMapping("/search")
     public ApiResponse<List<Briefing>> search(@RequestParam String keyword) {
         return ApiResponse.success(service.search(keyword));
+    }
+
+    @PostMapping("/{id}/clone")
+    public ApiResponse<Briefing> clone(@PathVariable Long id) {
+        Briefing original = service.getById(id);
+        if (original == null) {
+            return ApiResponse.error(404, "简讯不存在");
+        }
+        Briefing clone = new Briefing(null, original.getTitle() + " (副本)", original.getContent(), original.getTemplateId(),
+            "草稿", original.getChannel(), original.getAuthor(), "V1.0", original.getAudience(),
+            null, original.getCreatedBy(), null, original.getDisasterType(), original.getDisasterLevel(),
+            original.getContentPart2(), original.getRemark(), null);
+        return ApiResponse.success(service.create(clone));
     }
 }
