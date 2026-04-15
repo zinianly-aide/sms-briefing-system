@@ -1,5 +1,6 @@
 package com.example.sms.service;
 
+import com.example.sms.common.constant.DomainStatus;
 import com.example.sms.template.entity.Template;
 import com.example.sms.template.mapper.TemplateMapper;
 import com.example.sms.template.service.impl.TemplateServiceImpl;
@@ -27,7 +28,7 @@ class TemplateServiceTest {
 
     private final LocalDateTime now = LocalDateTime.now();
 
-    private final Template sample = new Template(1L, "预警模板", "预警", "请注意安全", "启用中", "运营", null, now);
+    private final Template sample = new Template(1L, "预警模板", "预警", "请注意安全", DomainStatus.Template.ACTIVE, "运营", null, now);
 
     @BeforeEach
     void setUp() {
@@ -61,7 +62,7 @@ class TemplateServiceTest {
     @Test
     void create_shouldReturnCreated() {
         when(templateMapper.insert(any())).thenReturn(1);
-        Template input = new Template(null, "通知模板", "通知", "内容", "草稿", "管理员", null, null);
+        Template input = new Template(null, "通知模板", "通知", "内容", DomainStatus.Template.DRAFT, "管理员", null, null);
         Template created = service.create(input);
         assertThat(created.getName()).isEqualTo("通知模板");
         assertThat(created.getUpdatedAt()).isNotNull();
@@ -71,14 +72,14 @@ class TemplateServiceTest {
     void update_shouldReturnUpdated() {
         when(templateMapper.selectById(1L)).thenReturn(sample);
         when(templateMapper.update(any())).thenReturn(1);
-        Template input = new Template(1L, "预警模板改", "预警", "新内容", "启用中", "运营", null, now);
+        Template input = new Template(1L, "预警模板改", "预警", "新内容", DomainStatus.Template.ACTIVE, "运营", null, now);
         assertThat(service.update(input).getContent()).isEqualTo("新内容");
     }
 
     @Test
     void update_shouldThrowWhenNotFound() {
         when(templateMapper.selectById(999L)).thenReturn(null);
-        Template input = new Template(999L, "不存在", "无", "无", "草稿", "无", null, now);
+        Template input = new Template(999L, "不存在", "无", "无", DomainStatus.Template.DRAFT, "无", null, now);
         assertThatThrownBy(() -> service.update(input)).isInstanceOf(RuntimeException.class)
             .hasMessageContaining("模板不存在");
     }

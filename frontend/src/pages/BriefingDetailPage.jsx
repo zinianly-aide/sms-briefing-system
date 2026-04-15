@@ -3,13 +3,7 @@ import { Alert, Button, Card, Col, Descriptions, Row, Space, Spin, Tag, Typograp
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchBriefing } from '../api/briefing';
-
-const statusConfig = {
-  '待审核': 'orange',
-  '待发送': 'blue',
-  '已发送': 'green',
-  '草稿': 'default'
-};
+import { getBriefingStatusMeta, getChannelLabel } from '../constants/domain';
 
 export default function BriefingDetailPage() {
   const { id } = useParams();
@@ -55,6 +49,8 @@ export default function BriefingDetailPage() {
     return <Typography.Text>未找到对应简讯</Typography.Text>;
   }
 
+  const statusMeta = getBriefingStatusMeta(briefing.status);
+
   return (
     <Space direction="vertical" size={20} style={{ width: '100%' }}>
       <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate('/briefings')} style={{ padding: 0 }}>
@@ -66,9 +62,9 @@ export default function BriefingDetailPage() {
             <Descriptions column={1} bordered size="small" labelStyle={{ width: 100, fontWeight: 500 }}>
               <Descriptions.Item label="简讯ID">{briefing.id}</Descriptions.Item>
               <Descriptions.Item label="状态">
-                <Tag color={statusConfig[briefing.status] || 'default'}>{briefing.status}</Tag>
+                <Tag color={statusMeta.color}>{statusMeta.label}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="发送渠道">{briefing.channel || '-'}</Descriptions.Item>
+              <Descriptions.Item label="发送渠道">{getChannelLabel(briefing.channel)}</Descriptions.Item>
               <Descriptions.Item label="作者">{briefing.author || '-'}</Descriptions.Item>
               <Descriptions.Item label="更新时间">{briefing.updatedAt || '-'}</Descriptions.Item>
               <Descriptions.Item label="版本">{briefing.version || '-'}</Descriptions.Item>
@@ -98,7 +94,7 @@ export default function BriefingDetailPage() {
                 <div>
                   <Typography.Text type="secondary" style={{ fontSize: 13 }}>当前状态</Typography.Text>
                   <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>
-                    <Tag color={statusConfig[briefing.status] || 'default'} style={{ fontSize: 14, padding: '2px 8px' }}>{briefing.status}</Tag>
+                    <Tag color={statusMeta.color} style={{ fontSize: 14, padding: '2px 8px' }}>{statusMeta.label}</Tag>
                   </div>
                 </div>
                 <div>
@@ -111,7 +107,7 @@ export default function BriefingDetailPage() {
                 </div>
                 <div>
                   <Typography.Text type="secondary" style={{ fontSize: 13 }}>发送渠道</Typography.Text>
-                  <div style={{ marginTop: 2 }}>{briefing.channel || '-'}</div>
+                  <div style={{ marginTop: 2 }}>{getChannelLabel(briefing.channel)}</div>
                 </div>
               </Space>
             </Card>

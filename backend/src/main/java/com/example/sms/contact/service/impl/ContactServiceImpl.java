@@ -1,5 +1,6 @@
 package com.example.sms.contact.service.impl;
 
+import com.example.sms.common.constant.DomainStatus;
 import com.example.sms.common.dto.PageResult;
 import com.example.sms.common.exception.BusinessException;
 import com.example.sms.contact.entity.ContactEntity;
@@ -60,7 +61,7 @@ public class ContactServiceImpl implements ContactService {
             contact.getMobile(),
             contact.getDepartment(),
             contact.getTitle(),
-            contact.getStatus(),
+            StringUtils.hasText(contact.getStatus()) ? contact.getStatus() : DomainStatus.Contact.ACTIVE,
             now,
             now
         );
@@ -183,7 +184,7 @@ public class ContactServiceImpl implements ContactService {
                     ContactEntity contact = new ContactEntity(null, name, mobile,
                         StringUtils.hasText(department) ? department : null,
                         StringUtils.hasText(title) ? title : null,
-                        "active", LocalDateTime.now(), LocalDateTime.now());
+                        DomainStatus.Contact.ACTIVE, LocalDateTime.now(), LocalDateTime.now());
                     contactMapper.insert(contact);
                     success++;
                 } catch (Exception e) {
@@ -214,7 +215,7 @@ public class ContactServiceImpl implements ContactService {
                 sb.append(c.getMobile() != null ? c.getMobile() : "").append(",");
                 sb.append(c.getDepartment() != null ? c.getDepartment() : "").append(",");
                 sb.append(c.getTitle() != null ? c.getTitle() : "").append(",");
-                sb.append(c.getStatus() != null ? c.getStatus() : "active").append("\n");
+                sb.append(c.getStatus() != null ? c.getStatus() : DomainStatus.Contact.ACTIVE).append("\n");
                 out.write(sb.toString().getBytes(StandardCharsets.UTF_8));
             }
         } catch (IOException e) {

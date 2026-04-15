@@ -1,5 +1,6 @@
 package com.example.sms.service;
 
+import com.example.sms.common.constant.DomainStatus;
 import com.example.sms.group.entity.ContactGroup;
 import com.example.sms.group.mapper.GroupMapper;
 import com.example.sms.group.service.impl.GroupServiceImpl;
@@ -27,7 +28,7 @@ class GroupServiceTest {
 
     private final LocalDateTime now = LocalDateTime.now();
 
-    private final ContactGroup sample = new ContactGroup(1L, "销售群", "销售部", 10, "销售,核心", now, "启用", now, now);
+    private final ContactGroup sample = new ContactGroup(1L, "销售群", "销售部", 10, "销售,核心", now, DomainStatus.Group.ENABLED, now, now);
 
     @BeforeEach
     void setUp() {
@@ -61,7 +62,7 @@ class GroupServiceTest {
     @Test
     void create_shouldReturnCreatedGroup() {
         when(groupMapper.insert(any())).thenReturn(1);
-        ContactGroup input = new ContactGroup(null, "研发群", "研发部", 5, "研发", null, "启用", null, null);
+        ContactGroup input = new ContactGroup(null, "研发群", "研发部", 5, "研发", null, DomainStatus.Group.ENABLED, null, null);
         ContactGroup created = service.create(input);
         assertThat(created.getName()).isEqualTo("研发群");
         assertThat(created.getCreatedAt()).isNotNull();
@@ -70,7 +71,7 @@ class GroupServiceTest {
     @Test
     void create_withNullMemberCount_shouldDefaultToZero() {
         when(groupMapper.insert(any())).thenReturn(1);
-        ContactGroup input = new ContactGroup(null, "测试群", "测试部", null, "测试", null, "启用", null, null);
+        ContactGroup input = new ContactGroup(null, "测试群", "测试部", null, "测试", null, DomainStatus.Group.ENABLED, null, null);
         ContactGroup created = service.create(input);
         assertThat(created.getMemberCount()).isEqualTo(0);
     }
@@ -79,7 +80,7 @@ class GroupServiceTest {
     void update_shouldReturnUpdated() {
         when(groupMapper.selectById(1L)).thenReturn(sample);
         when(groupMapper.update(any())).thenReturn(1);
-        ContactGroup input = new ContactGroup(1L, "销售群改名", "销售部", 15, "销售", now, "启用", now, now);
+        ContactGroup input = new ContactGroup(1L, "销售群改名", "销售部", 15, "销售", now, DomainStatus.Group.ENABLED, now, now);
         ContactGroup updated = service.update(input);
         assertThat(updated.getName()).isEqualTo("销售群改名");
     }
@@ -87,7 +88,7 @@ class GroupServiceTest {
     @Test
     void update_shouldThrowWhenNotFound() {
         when(groupMapper.selectById(999L)).thenReturn(null);
-        ContactGroup input = new ContactGroup(999L, "不存在", "无", 0, "", null, "启用", now, now);
+        ContactGroup input = new ContactGroup(999L, "不存在", "无", 0, "", null, DomainStatus.Group.ENABLED, now, now);
         assertThatThrownBy(() -> service.update(input)).isInstanceOf(RuntimeException.class)
             .hasMessageContaining("群组不存在");
     }

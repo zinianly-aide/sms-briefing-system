@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS sms_task_recipient (
     contact_id BIGINT,
     mobile VARCHAR(32) NOT NULL,
     name VARCHAR(64),
-    status VARCHAR(32) DEFAULT '待发送',
+    status VARCHAR(32) DEFAULT 'pending',
     sent_at DATETIME,
     error_msg VARCHAR(256),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -53,7 +53,28 @@ CREATE TABLE IF NOT EXISTS system_config (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 5. Default system configs
+-- 5. Briefing (简讯录入)
+CREATE TABLE IF NOT EXISTS briefing (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    template_id BIGINT,
+    status VARCHAR(32) NOT NULL,
+    channel VARCHAR(64),
+    author VARCHAR(64),
+    version VARCHAR(32),
+    audience VARCHAR(512),
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(64),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    disaster_type VARCHAR(64) DEFAULT NULL COMMENT '灾害类别',
+    disaster_level VARCHAR(32) DEFAULT NULL COMMENT '级别',
+    content_part2 TEXT DEFAULT NULL COMMENT '内容二',
+    remark TEXT DEFAULT NULL COMMENT '说明',
+    legacy_payload TEXT DEFAULT NULL COMMENT '原始载荷'
+);
+
+-- 6. Default system configs
 INSERT IGNORE INTO system_config (config_key, config_value, config_desc) VALUES
 ('sms_max_length', '70', '短信最大长度'),
 ('allow_external_number', 'false', '是否允许手动输入外部号码'),
@@ -61,14 +82,6 @@ INSERT IGNORE INTO system_config (config_key, config_value, config_desc) VALUES
 ('mock_send_success_rate', '85', 'Mock发送成功率(百分比)'),
 ('number_priority', 'hr_first', '号码优先级: hr_first=HR优先, personal_first=私人优先');
 
--- NOTE: ALTER TABLE statements for briefing and briefing_template
--- are handled separately due to MySQL IF NOT EXISTS limitations.
--- Run the following after verifying columns don't exist:
---
--- ALTER TABLE briefing ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
--- ALTER TABLE briefing ADD COLUMN disaster_type VARCHAR(64) DEFAULT NULL COMMENT '灾害类别';
--- ALTER TABLE briefing ADD COLUMN disaster_level VARCHAR(32) DEFAULT NULL COMMENT '级别';
--- ALTER TABLE briefing ADD COLUMN content_part2 TEXT DEFAULT NULL COMMENT '内容二';
--- ALTER TABLE briefing ADD COLUMN remark TEXT DEFAULT NULL COMMENT '说明';
--- ALTER TABLE briefing ADD COLUMN legacy_payload TEXT DEFAULT NULL COMMENT '原始载荷';
--- ALTER TABLE briefing_template ADD COLUMN default_group_ids VARCHAR(512) DEFAULT NULL COMMENT '默认发送群组ID列表';
+-- 7. Columns used by current Java entities / mappers
+ALTER TABLE briefing_template
+    ADD COLUMN default_group_ids VARCHAR(512) DEFAULT NULL COMMENT '默认发送群组ID列表';

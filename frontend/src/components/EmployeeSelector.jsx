@@ -33,13 +33,17 @@ export default function EmployeeSelector({ open, onOk, onCancel, selectedIds = [
       .finally(() => setLoading(false));
   }, [open, keyword, dept, page]);
 
+  const safeDepartments = Array.isArray(departments) ? departments : [];
+  const safeEmployees = Array.isArray(employees) ? employees : [];
+  const safePicked = Array.isArray(picked) ? picked : [];
+
   const handleOk = () => {
-    onOk?.(picked);
+    onOk?.(safePicked);
   };
 
   const rowSelection = multiple
     ? {
-        selectedRowKeys: picked,
+        selectedRowKeys: safePicked,
         onChange: (keys) => setPicked(keys),
         type: 'checkbox'
       }
@@ -70,14 +74,14 @@ export default function EmployeeSelector({ open, onOk, onCancel, selectedIds = [
           allowClear
           value={dept || undefined}
           onChange={(v) => { setDept(v || ''); setPage(1); }}
-          options={departments.map((d) => ({ value: d, label: d }))}
+          options={safeDepartments.map((d) => ({ value: d, label: d }))}
         />
-        {picked.length > 0 && <Tag color="blue">已选 {picked.length} 人</Tag>}
+        {safePicked.length > 0 && <Tag color="blue">已选 {safePicked.length} 人</Tag>}
       </Space>
       <Table
         rowKey="id"
         loading={loading}
-        dataSource={employees}
+        dataSource={safeEmployees}
         rowSelection={rowSelection}
         size="small"
         pagination={{

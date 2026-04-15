@@ -27,7 +27,7 @@ describe('dashboard API', () => {
   });
 
   test('createTask sends POST to /api/tasks', async () => {
-    const payload = { title: '测试任务', channel: '短信' };
+    const payload = { title: '测试任务', channel: 'sms' };
     await createTask(payload);
     expect(fetch).toHaveBeenCalledWith(`${API_BASE}/tasks`, expect.objectContaining({
       method: 'POST',

@@ -1,7 +1,7 @@
 import { request } from './client';
 
 export function fetchGroups() {
-  return request('/groups');
+  return request('/groups?page=1&pageSize=1000', {}, []);
 }
 
 export function createGroup(payload) {
@@ -25,11 +25,11 @@ export function deleteGroup(id) {
 }
 
 export function searchGroups(keyword) {
-  return request(`/groups/search?keyword=${encodeURIComponent(keyword)}`);
+  return request(`/groups/search?keyword=${encodeURIComponent(keyword)}&page=1&pageSize=1000`, {}, []);
 }
 
 export function fetchGroupMembers(groupId) {
-  return request(`/groups/${groupId}/members`);
+  return request(`/groups/${groupId}/members`, {}, []);
 }
 
 export function addGroupMembers(groupId, contactIds) {

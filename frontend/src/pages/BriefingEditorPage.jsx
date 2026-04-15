@@ -8,6 +8,7 @@ import { fetchGroupMembers, fetchGroups } from '../api/group';
 import { fetchTemplates } from '../api/template';
 import ConfirmSendModal from '../components/ConfirmSendModal';
 import RecipientPreview from '../components/RecipientPreview';
+import { BRIEFING_STATUS_OPTIONS, CHANNEL_OPTIONS } from '../constants/domain';
 import { useAuth } from '../context/AuthContext';
 
 export default function BriefingEditorPage() {
@@ -24,13 +25,17 @@ export default function BriefingEditorPage() {
   const [previewData, setPreviewData] = useState(null);
   const scheduleType = Form.useWatch('scheduleType', form);
   const selectedGroupIds = Form.useWatch('groupIds', form);
+  const briefingStatusByScheduleType = {
+    immediate: BRIEFING_STATUS_OPTIONS.find((item) => item.value === 'pending_send')?.value || 'pending_send',
+    scheduled: BRIEFING_STATUS_OPTIONS.find((item) => item.value === 'pending_review')?.value || 'pending_review',
+  };
 
   useEffect(() => {
     const loadOptions = async () => {
       try {
         const [groupData, templateData] = await Promise.all([fetchGroups(), fetchTemplates()]);
-        setGroups(groupData || []);
-        setTemplates(templateData || []);
+        setGroups(Array.isArray(groupData) ? groupData : []);
+        setTemplates(Array.isArray(templateData) ? templateData : []);
       } catch (err) {
         setError(err.message || '加载选项失败');
       }
@@ -38,8 +43,12 @@ export default function BriefingEditorPage() {
     loadOptions();
   }, []);
 
+  const safeGroups = Array.isArray(groups) ? groups : [];
+  const safeTemplates = Array.isArray(templates) ? templates : [];
+  const safeRecipients = Array.isArray(recipients) ? recipients : [];
+
   const handleTemplateSelect = (templateId) => {
-    const tpl = templates.find((t) => t.id === templateId);
+    const tpl = safeTemplates.find((t) => t.id === templateId);
     if (tpl) {
       form.setFieldsValue({ content: tpl.content });
       setPreview(tpl.content);
@@ -52,12 +61,12 @@ export default function BriefingEditorPage() {
       try {
         const members = await fetchGroupMembers(gid);
         for (const m of (members || [])) {
-          allMembers.push({ name: m.contactName, mobile: m.contactMobile, department: m.contactDepartment, source: groups.find((g) => g.id === gid)?.name || '群组' });
+          allMembers.push({ name: m.contactName, mobile: m.contactMobile, department: m.contactDepartment, source: safeGroups.find((g) => g.id === gid)?.name || '群组' });
         }
       } catch { /* skip failed groups */ }
     }
     return allMembers;
-  }, [groups]);
+  }, [safeGroups]);
 
   useEffect(() => {
     if (!selectedGroupIds || selectedGroupIds.length === 0) {
@@ -80,7 +89,7 @@ export default function BriefingEditorPage() {
         title: values.title,
         content: values.content,
         templateId: values.templateId,
-        status: values.scheduleType === '立即' ? '待发送' : '待审核',
+        status: briefingStatusByScheduleType[values.scheduleType] || 'pending_send',
         channel: values.channel,
         author: displayName,
         version: 'V1.0',
@@ -129,7 +138,7 @@ export default function BriefingEditorPage() {
                 <Select
                   allowClear
                   placeholder="可选：从模板库快速载入"
-                  options={templates.map((t) => ({ value: t.id, label: t.name }))}
+                  options={safeTemplates.map((t) => ({ value: t.id, label: t.name }))}
                   onChange={handleTemplateSelect}
                 />
               </Form.Item>
@@ -146,7 +155,7 @@ export default function BriefingEditorPage() {
                 <Select
                   mode="multiple"
                   placeholder="选择发送对象"
-                  options={groups.map((g) => ({ value: g.id, label: g.name }))}
+                  options={safeGroups.map((g) => ({ value: g.id, label: g.name }))}
                 />
               </Form.Item>
               <Form.Item label="灾害类别" name="disasterType">
@@ -179,13 +188,13 @@ export default function BriefingEditorPage() {
               <Form.Item label="补充内容" name="contentPart2">
                 <Input.TextArea rows={4} maxLength={1000} placeholder="可选：补充内容" />
               </Form.Item>
-              <Form.Item label="发送渠道" name="channel" initialValue="短信">
-                <Select options={[{ value: '短信', label: '短信' }, { value: '短信+企微', label: '短信 + 企微' }]} />
+              <Form.Item label="发送渠道" name="channel" initialValue="sms">
+                <Select options={CHANNEL_OPTIONS} />
               </Form.Item>
-              <Form.Item label="调度方式" name="scheduleType" initialValue="立即">
-                <Select options={[{ value: '立即', label: '立即发送' }, { value: '预约', label: '预约发送' }]} />
+              <Form.Item label="调度方式" name="scheduleType" initialValue="immediate">
+                <Select options={[{ value: 'immediate', label: '立即发送' }, { value: 'scheduled', label: '预约发送' }]} />
               </Form.Item>
-              {scheduleType === '预约' && (
+              {scheduleType === 'scheduled' && (
                 <Form.Item label="预约时间" name="scheduledTime" rules={[{ required: true, message: '请选择预约时间' }]}>
                   <DatePicker showTime style={{ width: '100%' }} placeholder="选择预约发送时间" />
                 </Form.Item>
@@ -221,12 +230,12 @@ export default function BriefingEditorPage() {
             </div>
           </Card>
           <Card className="soft-card" bordered={false} title={<><TeamOutlined /> 接收人预览</>} style={{ marginTop: 16 }}>
-            <RecipientPreview recipients={recipients} />
+            <RecipientPreview recipients={safeRecipients} />
           </Card>
           <ConfirmSendModal
             open={confirmModal}
             briefing={previewData}
-            recipients={recipients}
+            recipients={safeRecipients}
             onConfirm={handleConfirmSend}
             onCancel={() => setConfirmModal(false)}
           />

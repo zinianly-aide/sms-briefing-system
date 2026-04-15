@@ -1,7 +1,7 @@
-import { request, API_BASE } from './client';
+import { request, API_BASE, normalizeResult } from './client';
 
 export function fetchContacts() {
-  return request('/contacts');
+  return request('/contacts?page=1&pageSize=1000', {}, []);
 }
 
 export function createContact(payload) {
@@ -25,7 +25,7 @@ export function deleteContact(id) {
 }
 
 export function searchContacts(keyword) {
-  return request(`/contacts/search?keyword=${encodeURIComponent(keyword)}`);
+  return request(`/contacts/search?keyword=${encodeURIComponent(keyword)}&page=1&pageSize=1000`);
 }
 
 export function importContacts(file) {
@@ -36,8 +36,8 @@ export function importContacts(file) {
     body: formData
   }).then(async (res) => {
     const result = await res.json();
-    if (!res.ok || result.success === false) throw new Error(result.message || '导入失败');
-    return result.data;
+    if (!res.ok || result?.success === false) throw new Error(result?.message || '导入失败');
+    return normalizeResult(result, { success: 0, fail: 0, errors: [] });
   });
 }
 
@@ -47,11 +47,11 @@ export function exportContacts() {
 
 export function fetchEmployees(params = {}) {
   const qs = new URLSearchParams(params).toString();
-  return request(`/selector/employees?${qs}`);
+  return request(`/selector/employees?${qs}`, {}, { list: [], total: 0 });
 }
 
 export function fetchDepartments() {
-  return request('/selector/departments');
+  return request('/selector/departments', {}, []);
 }
 
 export function syncHrData() {

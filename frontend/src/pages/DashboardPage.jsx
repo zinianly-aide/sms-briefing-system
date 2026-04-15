@@ -3,11 +3,15 @@ import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import { createTask } from '../api/dashboard';
 import StatCard from '../components/StatCard';
+import { CHANNEL_OPTIONS, getChannelLabel, getTaskStatusMeta, getTemplateStatusMeta } from '../constants/domain';
 import { useAuth } from '../context/AuthContext';
 
 export default function DashboardPage({ dashboard, onTaskCreated }) {
   const [form] = Form.useForm();
   const { displayName } = useAuth();
+  const safeGroups = Array.isArray(dashboard?.groups) ? dashboard.groups : [];
+  const safeTemplates = Array.isArray(dashboard?.templates) ? dashboard.templates : [];
+  const safeTasks = Array.isArray(dashboard?.tasks) ? dashboard.tasks : [];
   const stats = useMemo(() => [
     { title: '联系人总量', value: dashboard?.totalContacts ?? 0, extra: '通讯录已汇聚 HR 数据与手工补录' },
     { title: '启用群组', value: dashboard?.activeGroups ?? 0, extra: '支持部门、标签、值班维度分组' },
@@ -22,7 +26,7 @@ export default function DashboardPage({ dashboard, onTaskCreated }) {
         plannedSendTime: dayjs().add(2, 'hour').second(0).millisecond(0).format('YYYY-MM-DDTHH:mm:ss'),
         groupIds: values.groupIds,
         channel: values.channel,
-        status: '待发送',
+        status: 'pending',
         recipientCount: 0,
         creator: displayName,
         successRate: '—'
@@ -44,7 +48,10 @@ export default function DashboardPage({ dashboard, onTaskCreated }) {
     {
       title: '标签',
       dataIndex: 'tags',
-      render: (tags) => tags ? <Space wrap>{tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</Space> : '-'
+      render: (tags) => {
+        const safeTags = Array.isArray(tags) ? tags : [];
+        return safeTags.length > 0 ? <Space wrap>{safeTags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</Space> : '-';
+      }
     }
   ];
 
@@ -56,20 +63,23 @@ export default function DashboardPage({ dashboard, onTaskCreated }) {
     {
       title: '状态',
       dataIndex: 'status',
-      render: (status) => <Tag color={status === '启用中' ? 'green' : 'gold'}>{status}</Tag>
+      render: (status) => {
+        const meta = getTemplateStatusMeta(status);
+        return <Tag color={meta.color}>{meta.label}</Tag>;
+      }
     }
   ];
 
   const taskColumns = [
     { title: '任务标题', dataIndex: 'title' },
-    { title: '发送渠道', dataIndex: 'channel' },
+    { title: '发送渠道', dataIndex: 'channel', render: (channel) => getChannelLabel(channel) },
     { title: '预约时间', dataIndex: 'plannedSendTime', render: (v) => v || '-' },
     {
       title: '状态',
       dataIndex: 'status',
       render: (status) => {
-        const colorMap = { '已完成': 'green', '待发送': 'blue', '草稿': 'default' };
-        return <Tag color={colorMap[status] || 'default'}>{status}</Tag>;
+        const meta = getTaskStatusMeta(status);
+        return <Tag color={meta.color}>{meta.label}</Tag>;
       }
     },
     { title: '覆盖人数', dataIndex: 'recipientCount' },
@@ -80,9 +90,9 @@ export default function DashboardPage({ dashboard, onTaskCreated }) {
     return <Empty description="暂无数据" />;
   }
 
-  const hasGroups = dashboard.groups?.length > 0;
-  const hasTemplates = dashboard.templates?.length > 0;
-  const hasTasks = dashboard.tasks?.length > 0;
+  const hasGroups = safeGroups.length > 0;
+  const hasTemplates = safeTemplates.length > 0;
+  const hasTasks = safeTasks.length > 0;
 
   return (
     <Space direction="vertical" size={20} style={{ width: '100%' }}>
@@ -97,7 +107,7 @@ export default function DashboardPage({ dashboard, onTaskCreated }) {
       <Row gutter={[16, 16]}>
         <Col xs={24} xl={12}>
           <Card title="快速创建简讯任务" className="soft-card" bordered={false}>
-            <Form layout="vertical" form={form} onFinish={handleFinish} initialValues={{ channel: '短信' }}>
+            <Form layout="vertical" form={form} onFinish={handleFinish} initialValues={{ channel: 'sms' }}>
               <Form.Item label="简讯标题" name="title" rules={[{ required: true, message: '请输入简讯标题' }]}>
                 <Input placeholder="例如：园区暴雨值班提醒" />
               </Form.Item>
@@ -105,10 +115,10 @@ export default function DashboardPage({ dashboard, onTaskCreated }) {
                 <Input.TextArea rows={4} showCount maxLength={300} placeholder="输入短信正文" />
               </Form.Item>
               <Form.Item label="目标群组" name="groupIds" rules={[{ required: true, message: '请选择目标群组' }]}>
-                <Select mode="multiple" options={(dashboard.groups || []).map((g) => ({ value: g.id, label: g.name }))} placeholder="选择发送对象群组" />
+                <Select mode="multiple" options={safeGroups.map((g) => ({ value: g.id, label: g.name }))} placeholder="选择发送对象群组" />
               </Form.Item>
               <Form.Item label="发送渠道" name="channel">
-                <Select options={[{ value: '短信', label: '短信' }, { value: '短信+企微', label: '短信 + 企微' }]} />
+                <Select options={CHANNEL_OPTIONS} />
               </Form.Item>
               <Button type="primary" htmlType="submit">创建任务</Button>
             </Form>
@@ -154,7 +164,7 @@ export default function DashboardPage({ dashboard, onTaskCreated }) {
 
       <Card title="群组列表" className="soft-card" bordered={false}>
         {hasGroups ? (
-          <Table rowKey="id" pagination={false} dataSource={dashboard.groups} columns={groupColumns} size="middle" />
+          <Table rowKey="id" pagination={false} dataSource={safeGroups} columns={groupColumns} size="middle" />
         ) : (
           <Empty description="暂无群组数据" />
         )}
@@ -162,7 +172,7 @@ export default function DashboardPage({ dashboard, onTaskCreated }) {
 
       <Card title="模板中心" className="soft-card" bordered={false}>
         {hasTemplates ? (
-          <Table rowKey="id" pagination={false} dataSource={dashboard.templates} columns={templateColumns} size="middle" />
+          <Table rowKey="id" pagination={false} dataSource={safeTemplates} columns={templateColumns} size="middle" />
         ) : (
           <Empty description="暂无模板数据" />
         )}
@@ -170,7 +180,7 @@ export default function DashboardPage({ dashboard, onTaskCreated }) {
 
       <Card title="发送任务" className="soft-card" bordered={false}>
         {hasTasks ? (
-          <Table rowKey="id" pagination={false} dataSource={dashboard.tasks} columns={taskColumns} size="middle" />
+          <Table rowKey="id" pagination={false} dataSource={safeTasks} columns={taskColumns} size="middle" />
         ) : (
           <Empty description="暂无发送任务" />
         )}

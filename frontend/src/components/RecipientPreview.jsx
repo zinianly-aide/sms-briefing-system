@@ -4,13 +4,15 @@ import { Space, Table, Tag, Typography } from 'antd';
 const { Text } = Typography;
 
 export default function RecipientPreview({ recipients = [] }) {
-  if (recipients.length === 0) {
+  const safeRecipients = Array.isArray(recipients) ? recipients : [];
+
+  if (safeRecipients.length === 0) {
     return <Text type="secondary">暂无接收人，请选择群组或手动添加</Text>;
   }
 
   const deduped = [];
   const seen = new Set();
-  for (const r of recipients) {
+  for (const r of safeRecipients) {
     if (!seen.has(r.mobile)) {
       seen.add(r.mobile);
       deduped.push(r);
@@ -40,7 +42,7 @@ export default function RecipientPreview({ recipients = [] }) {
         <Text type="secondary">去重后共 {deduped.length} 人</Text>
       </Space>
       <Table
-        rowKey={(r) => r.mobile}
+        rowKey={(r, index) => r?.mobile || r?.id || index}
         dataSource={deduped}
         columns={columns}
         pagination={false}

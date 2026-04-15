@@ -1,6 +1,7 @@
 package com.example.sms.contact.controller;
 
 import com.example.sms.common.api.ApiResponse;
+import com.example.sms.common.constant.DomainValueValidator;
 import com.example.sms.common.dto.PageResult;
 import com.example.sms.contact.entity.ContactEntity;
 import com.example.sms.contact.service.ContactService;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -41,11 +43,13 @@ public class ContactModuleController {
 
     @PostMapping
     public ApiResponse<ContactEntity> create(@Valid @RequestBody ContactEntity contact) {
+        DomainValueValidator.validateContactStatus(contact.getStatus());
         return ApiResponse.success(service.create(contact));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<ContactEntity> update(@PathVariable Long id, @Valid @RequestBody ContactEntity contact) {
+        DomainValueValidator.validateContactStatus(contact.getStatus());
         contact = new ContactEntity(id, contact.getName(), contact.getMobile(),
             contact.getDepartment(), contact.getTitle(), contact.getStatus(),
             contact.getCreatedAt(), contact.getUpdatedAt());
@@ -64,6 +68,7 @@ public class ContactModuleController {
 
     @GetMapping("/status/{status}")
     public ApiResponse<List<ContactEntity>> getByStatus(@PathVariable String status) {
+        DomainValueValidator.validateContactStatus(status);
         return ApiResponse.success(service.getByStatus(status));
     }
 
@@ -84,8 +89,12 @@ public class ContactModuleController {
         if (filename == null || (!filename.endsWith(".csv") && !filename.endsWith(".CSV"))) {
             return ApiResponse.error(400, "仅支持CSV文件");
         }
-        java.util.Map<String, Object> result = service.importCsv(file.getBytes());
-        return ApiResponse.success(result);
+        try {
+            java.util.Map<String, Object> result = service.importCsv(file.getBytes());
+            return ApiResponse.success(result);
+        } catch (IOException e) {
+            return ApiResponse.error(500, "读取文件失败");
+        }
     }
 
     @GetMapping("/export")

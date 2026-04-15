@@ -1,7 +1,7 @@
 import { request } from './client';
 
 export function fetchTemplates() {
-  return request('/templates');
+  return request('/templates?page=1&pageSize=1000', {}, []);
 }
 
 export function createTemplate(payload) {
@@ -25,5 +25,5 @@ export function deleteTemplate(id) {
 }
 
 export function searchTemplates(keyword) {
-  return request(`/templates/search?keyword=${encodeURIComponent(keyword)}`);
+  return request(`/templates/search?keyword=${encodeURIComponent(keyword)}&page=1&pageSize=1000`, {}, []);
 }

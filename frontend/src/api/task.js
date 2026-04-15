@@ -1,7 +1,7 @@
 import { request } from './client';
 
 export function fetchTasks() {
-  return request('/tasks');
+  return request('/tasks?page=1&pageSize=1000', {}, []);
 }
 
 export function createTask(payload) {
@@ -25,7 +25,7 @@ export function deleteTask(id) {
 }
 
 export function searchTasks(keyword) {
-  return request(`/tasks/search?keyword=${encodeURIComponent(keyword)}`);
+  return request(`/tasks/search?keyword=${encodeURIComponent(keyword)}&page=1&pageSize=1000`, {}, []);
 }
 
 export function executeTask(id) {
@@ -40,5 +40,5 @@ export function cancelTask(id, reason = '') {
 }
 
 export function fetchTaskRecipients(id) {
-  return request(`/tasks/${id}/recipients`);
+  return request(`/tasks/${id}/recipients`, {}, []);
 }

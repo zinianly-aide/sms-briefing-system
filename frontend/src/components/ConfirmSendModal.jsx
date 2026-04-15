@@ -1,10 +1,13 @@
 import { Alert, Modal, Typography } from 'antd';
+import { getChannelLabel } from '../constants/domain';
 import RecipientPreview from './RecipientPreview';
 
 const { Text, Paragraph } = Typography;
 
 export default function ConfirmSendModal({ open, briefing, recipients = [], onConfirm, onCancel }) {
   if (!briefing) return null;
+
+  const safeRecipients = Array.isArray(recipients) ? recipients : [];
 
   return (
     <Modal
@@ -34,13 +37,13 @@ export default function ConfirmSendModal({ open, briefing, recipients = [], onCo
       )}
       <div style={{ marginBottom: 16 }}>
         <Text strong>发送渠道：</Text>
-        <Text>{briefing.channel || '短信'}</Text>
+        <Text>{getChannelLabel(briefing.channel)}</Text>
       </div>
       <div style={{ marginBottom: 16 }}>
         <Text strong>接收人列表：</Text>
       </div>
-      <RecipientPreview recipients={recipients} />
-      {recipients.length === 0 && (
+      <RecipientPreview recipients={safeRecipients} />
+      {safeRecipients.length === 0 && (
         <Alert type="warning" showIcon message="尚未选择接收人，请返回添加" style={{ marginTop: 12 }} />
       )}
     </Modal>

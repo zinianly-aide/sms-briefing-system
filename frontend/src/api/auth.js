@@ -1,4 +1,4 @@
-import { API_BASE } from './client';
+import { API_BASE, normalizeResult } from './client';
 
 export function login(username, password) {
   return fetch(`${API_BASE}/auth/login`, {
@@ -7,8 +7,8 @@ export function login(username, password) {
     body: JSON.stringify({ username, password })
   }).then(async (res) => {
     const result = await res.json();
-    if (!res.ok || result.success === false) throw new Error(result.message || '登录失败');
-    return result.data;
+    if (!res.ok || result?.success === false) throw new Error(result?.message || '登录失败');
+    return normalizeResult(result, null);
   });
 }
 
@@ -19,8 +19,8 @@ export function register(username, password, displayName) {
     body: JSON.stringify({ username, password, displayName })
   }).then(async (res) => {
     const result = await res.json();
-    if (!res.ok || result.success === false) throw new Error(result.message || '注册失败');
-    return result.data;
+    if (!res.ok || result?.success === false) throw new Error(result?.message || '注册失败');
+    return normalizeResult(result, null);
   });
 }
 

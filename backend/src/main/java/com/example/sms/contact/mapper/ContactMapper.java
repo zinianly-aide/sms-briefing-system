@@ -12,9 +12,11 @@ public interface ContactMapper {
     List<ContactEntity> selectAll();
     
     // 根据ID查询联系人
+    @Select("SELECT * FROM contact WHERE id = #{id}")
     ContactEntity selectById(@Param("id") Long id);
     
     // 根据手机号查询联系人
+    @Select("SELECT * FROM contact WHERE mobile = #{mobile} LIMIT 1")
     ContactEntity selectByMobile(@Param("mobile") String mobile);
     
     // 插入联系人

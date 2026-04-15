@@ -1,6 +1,7 @@
 package com.example.sms.smstask.controller;
 
 import com.example.sms.common.api.ApiResponse;
+import com.example.sms.common.constant.DomainValueValidator;
 import com.example.sms.common.dto.PageResult;
 import com.example.sms.smstask.entity.SmsTask;
 import com.example.sms.smstask.entity.SmsTaskRecipient;
@@ -38,11 +39,15 @@ public class SmsTaskController {
 
     @PostMapping
     public ApiResponse<SmsTask> create(@Valid @RequestBody SmsTask task) {
+        DomainValueValidator.validateTaskStatus(task.getStatus());
+        DomainValueValidator.validateChannel(task.getChannel());
         return ApiResponse.success(service.create(task));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<SmsTask> update(@PathVariable Long id, @Valid @RequestBody SmsTask task) {
+        DomainValueValidator.validateTaskStatus(task.getStatus());
+        DomainValueValidator.validateChannel(task.getChannel());
         SmsTask payload = new SmsTask(id, task.getTitle(), task.getChannel(), task.getPlannedSendTime(), task.getStatus(), task.getRecipientCount(), task.getCreator(), task.getSuccessRate(), task.getCreatedAt(), task.getUpdatedAt());
         return ApiResponse.success(service.update(payload));
     }

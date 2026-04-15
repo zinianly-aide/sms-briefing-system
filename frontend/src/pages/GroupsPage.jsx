@@ -3,13 +3,14 @@ import { Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag
 import { useEffect, useState } from 'react';
 import { addGroupMembers, createGroup, deleteGroup, fetchGroupMembers, fetchGroups, removeGroupMember, searchGroups, updateGroup } from '../api/group';
 import { fetchContacts } from '../api/contact';
+import { GROUP_STATUS_OPTIONS, getGroupStatusMeta } from '../constants/domain';
 
 const defaultForm = {
   name: '',
   ownerDept: '',
   memberCount: 0,
   tags: [],
-  status: '启用'
+  status: 'enabled'
 };
 
 export default function GroupsPage() {
@@ -30,7 +31,7 @@ export default function GroupsPage() {
     try {
       setLoading(true);
       const data = keyword ? await searchGroups(keyword) : await fetchGroups();
-      setGroups(data || []);
+      setGroups(data?.list || data || []);
     } catch (err) {
       message.error(err.message || '加载群组失败');
     } finally {
@@ -147,6 +148,10 @@ export default function GroupsPage() {
     }
   };
 
+  const safeGroups = Array.isArray(groups) ? groups : [];
+  const safeMembers = Array.isArray(members) ? members : [];
+  const safeAllContacts = Array.isArray(allContacts) ? allContacts : [];
+
   const columns = [
     { title: '群组名称', dataIndex: 'name' },
     { title: '归属部门', dataIndex: 'ownerDept', width: 140 },
@@ -155,7 +160,14 @@ export default function GroupsPage() {
       title: '标签',
       dataIndex: 'tags',
       width: 200,
-      render: (tags) => tags ? <Space wrap>{tags.split(',').filter(Boolean).map((tag) => <Tag key={tag}>{tag}</Tag>)}</Space> : '-'
+      render: (tags) => {
+        const safeTags = typeof tags === 'string'
+          ? tags.split(',').map((tag) => tag.trim()).filter(Boolean)
+          : Array.isArray(tags)
+            ? tags.filter(Boolean)
+            : [];
+        return safeTags.length > 0 ? <Space wrap>{safeTags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</Space> : '-';
+      }
     },
     {
       title: '最近同步',
@@ -167,7 +179,10 @@ export default function GroupsPage() {
       title: '状态',
       dataIndex: 'status',
       width: 100,
-      render: (status) => <Tag color={status === '启用' ? 'green' : 'default'}>{status}</Tag>
+      render: (status) => {
+        const meta = getGroupStatusMeta(status);
+        return <Tag color={meta.color}>{meta.label}</Tag>;
+      }
     },
     {
       title: '操作',
@@ -185,7 +200,7 @@ export default function GroupsPage() {
     }
   ];
 
-  const filtered = groups.filter((g) =>
+  const filtered = safeGroups.filter((g) =>
     !searchText || g.name?.toLowerCase().includes(searchText.toLowerCase()) || g.ownerDept?.toLowerCase().includes(searchText.toLowerCase())
   );
 
@@ -227,7 +242,7 @@ export default function GroupsPage() {
             <Select mode="tags" placeholder="输入标签后回车添加，如：销售、华东、核心群组" />
           </Form.Item>
           <Form.Item label="状态" name="status">
-            <Select options={[{ label: '启用', value: '启用' }, { label: '停用', value: '停用' }]} />
+            <Select options={GROUP_STATUS_OPTIONS} />
           </Form.Item>
         </Form>
       </Modal>
@@ -245,7 +260,7 @@ export default function GroupsPage() {
         <Table
           rowKey="contactId"
           loading={memberLoading}
-          dataSource={members}
+          dataSource={safeMembers}
           columns={[
             { title: '姓名', dataIndex: 'contactName', width: 100 },
             { title: '手机号', dataIndex: 'contactMobile', width: 140 },
@@ -281,7 +296,7 @@ export default function GroupsPage() {
           placeholder="搜索并选择联系人"
           value={selectedContactIds}
           onChange={setSelectedContactIds}
-          options={allContacts.map((c) => ({ value: c.id, label: `${c.name} (${c.mobile})` }))}
+          options={safeAllContacts.map((c) => ({ value: c.id, label: `${c.name} (${c.mobile})` }))}
           showSearch
           optionFilterProp="label"
         />

@@ -2,6 +2,7 @@ import { CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, DownloadOutli
 import { Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, Upload, message } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { createContact, deleteContact, exportContacts, fetchContacts, importContacts, searchContacts, syncHrData, updateContact } from '../api/contact';
+import { CONTACT_STATUS_OPTIONS, getContactStatusMeta } from '../constants/domain';
 
 const defaultForm = {
   name: '',
@@ -9,11 +10,6 @@ const defaultForm = {
   department: '',
   title: '',
   status: 'active'
-};
-
-const statusConfig = {
-  active: { text: '有效', color: 'green', icon: <CheckCircleOutlined /> },
-  inactive: { text: '停用', color: 'default', icon: <CloseCircleOutlined /> }
 };
 
 export default function ContactsPage() {
@@ -29,7 +25,7 @@ export default function ContactsPage() {
     try {
       setLoading(true);
       const data = keyword ? await searchContacts(keyword) : await fetchContacts();
-      setContacts(data || []);
+      setContacts(data?.list || data || []);
     } catch (err) {
       message.error(err.message || '加载联系人失败');
     } finally {
@@ -41,14 +37,16 @@ export default function ContactsPage() {
     loadContacts();
   }, []);
 
+  const safeContacts = Array.isArray(contacts) ? contacts : [];
+
   const departmentOptions = useMemo(() => {
-    return [...new Set(contacts.map((item) => item.department).filter(Boolean))].map((item) => ({
+    return [...new Set(safeContacts.map((item) => item?.department).filter(Boolean))].map((item) => ({
       label: item,
       value: item
     }));
-  }, [contacts]);
+  }, [safeContacts]);
 
-  const filtered = contacts.filter((item) => {
+  const filtered = safeContacts.filter((item) => {
     const keywordOk = !searchText || item.name?.toLowerCase().includes(searchText.toLowerCase()) || item.mobile?.includes(searchText);
     const departmentOk = !department || item.department === department;
     return keywordOk && departmentOk;
@@ -137,8 +135,9 @@ export default function ContactsPage() {
       dataIndex: 'status',
       width: 100,
       render: (status) => {
-        const cfg = statusConfig[status] || { text: status, color: 'default' };
-        return <Tag color={cfg.color} icon={cfg.icon}>{cfg.text}</Tag>;
+        const meta = getContactStatusMeta(status);
+        const icon = status === 'active' ? <CheckCircleOutlined /> : status === 'inactive' ? <CloseCircleOutlined /> : null;
+        return <Tag color={meta.color} icon={icon}>{meta.label}</Tag>;
       }
     },
     {
@@ -214,7 +213,7 @@ export default function ContactsPage() {
             <Input placeholder="请输入职位" />
           </Form.Item>
           <Form.Item label="状态" name="status">
-            <Select options={[{ label: '有效', value: 'active' }, { label: '停用', value: 'inactive' }]} />
+            <Select options={CONTACT_STATUS_OPTIONS} />
           </Form.Item>
         </Form>
       </Modal>

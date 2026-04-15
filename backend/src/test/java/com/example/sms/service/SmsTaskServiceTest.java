@@ -1,5 +1,6 @@
 package com.example.sms.service;
 
+import com.example.sms.common.constant.DomainStatus;
 import com.example.sms.smstask.entity.SmsTask;
 import com.example.sms.smstask.mapper.SmsTaskMapper;
 import com.example.sms.smstask.mapper.SmsTaskRecipientMapper;
@@ -35,7 +36,7 @@ class SmsTaskServiceTest {
 
     private final LocalDateTime now = LocalDateTime.now();
 
-    private final SmsTask sample = new SmsTask(1L, "暴雨提醒", "短信", now, "待发送", 10, "张三", "—", now, now);
+    private final SmsTask sample = new SmsTask(1L, "暴雨提醒", DomainStatus.Channel.SMS, now, DomainStatus.Task.PENDING, 10, "张三", "—", now, now);
 
     @BeforeEach
     void setUp() {
@@ -69,7 +70,7 @@ class SmsTaskServiceTest {
     @Test
     void create_shouldReturnCreated() {
         when(smsTaskMapper.insert(any())).thenReturn(1);
-        SmsTask input = new SmsTask(null, "新任务", "短信", null, "草稿", 0, "李四", null, null, null);
+        SmsTask input = new SmsTask(null, "新任务", DomainStatus.Channel.SMS, null, DomainStatus.Task.DRAFT, 0, "李四", null, null, null);
         SmsTask created = service.create(input);
         assertThat(created.getTitle()).isEqualTo("新任务");
         assertThat(created.getCreatedAt()).isNotNull();
@@ -79,14 +80,14 @@ class SmsTaskServiceTest {
     void update_shouldReturnUpdated() {
         when(smsTaskMapper.selectById(1L)).thenReturn(sample);
         when(smsTaskMapper.update(any())).thenReturn(1);
-        SmsTask input = new SmsTask(1L, "暴雨提醒改", "短信+企微", now, "已完成", 20, "张三", "100%", now, now);
+        SmsTask input = new SmsTask(1L, "暴雨提醒改", DomainStatus.Channel.SMS_WECOM, now, DomainStatus.Task.COMPLETED, 20, "张三", "100%", now, now);
         assertThat(service.update(input).getTitle()).isEqualTo("暴雨提醒改");
     }
 
     @Test
     void update_shouldThrowWhenNotFound() {
         when(smsTaskMapper.selectById(999L)).thenReturn(null);
-        SmsTask input = new SmsTask(999L, "不存在", "短信", null, "草稿", 0, "无", null, now, now);
+        SmsTask input = new SmsTask(999L, "不存在", DomainStatus.Channel.SMS, null, DomainStatus.Task.DRAFT, 0, "无", null, now, now);
         assertThatThrownBy(() -> service.update(input)).isInstanceOf(RuntimeException.class)
             .hasMessageContaining("发送任务不存在");
     }

@@ -1,5 +1,6 @@
 package com.example.sms.report.service.impl;
 
+import com.example.sms.common.constant.DomainStatus;
 import com.example.sms.contact.mapper.ContactMapper;
 import com.example.sms.group.entity.ContactGroup;
 import com.example.sms.group.mapper.GroupMapper;
@@ -33,10 +34,10 @@ public class ReportServiceImpl implements ReportService {
         List<Template> templates = templateMapper.selectAll();
         List<SmsTask> tasks = smsTaskMapper.selectAll();
         int totalContacts = contactMapper.count();
-        int activeGroups = groupMapper.countByStatus("启用");
+        int activeGroups = groupMapper.countByStatus(DomainStatus.Group.ENABLED);
         int templateCount = templateMapper.count();
         int totalTasks = smsTaskMapper.count();
-        int pendingTasks = smsTaskMapper.countByStatus("待发送");
+        int pendingTasks = smsTaskMapper.countByStatus(DomainStatus.Task.PENDING);
 
         return new ReportOverviewResponse(
             totalContacts,

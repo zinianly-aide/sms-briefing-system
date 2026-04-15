@@ -1,5 +1,6 @@
 package com.example.sms.smstask.service.impl;
 
+import com.example.sms.common.constant.DomainStatus;
 import com.example.sms.common.dto.PageResult;
 import com.example.sms.common.exception.BusinessException;
 import com.example.sms.smstask.entity.SmsTask;
@@ -57,7 +58,18 @@ public class SmsTaskServiceImpl implements SmsTaskService {
     @Transactional
     public SmsTask create(SmsTask task) {
         LocalDateTime now = LocalDateTime.now();
-        SmsTask created = new SmsTask(null, task.getTitle(), task.getChannel(), task.getPlannedSendTime(), task.getStatus(), task.getRecipientCount(), task.getCreator(), task.getSuccessRate(), now, now);
+        SmsTask created = new SmsTask(
+            null,
+            task.getTitle(),
+            StringUtils.hasText(task.getChannel()) ? task.getChannel() : DomainStatus.Channel.SMS,
+            task.getPlannedSendTime(),
+            StringUtils.hasText(task.getStatus()) ? task.getStatus() : DomainStatus.Task.DRAFT,
+            task.getRecipientCount(),
+            task.getCreator(),
+            task.getSuccessRate(),
+            now,
+            now
+        );
         smsTaskMapper.insert(created);
         return created;
     }
@@ -106,16 +118,16 @@ public class SmsTaskServiceImpl implements SmsTaskService {
         if (task == null) {
             throw new BusinessException(404, "任务不存在");
         }
-        if (!"待发送".equals(task.getStatus()) && !"草稿".equals(task.getStatus())) {
+        if (!DomainStatus.Task.PENDING.equals(task.getStatus()) && !DomainStatus.Task.DRAFT.equals(task.getStatus())) {
             throw new BusinessException(400, "任务状态不允许发送: " + task.getStatus());
         }
 
         // Update task status to sending
-        updateTaskStatus(task, "发送中");
+        updateTaskStatus(task, DomainStatus.Task.SENDING);
 
         List<SmsTaskRecipient> recipients = recipientMapper.selectByTaskId(taskId);
         if (recipients.isEmpty()) {
-            updateTaskStatus(task, "失败");
+            updateTaskStatus(task, DomainStatus.Task.FAILED);
             return;
         }
 
@@ -128,7 +140,7 @@ public class SmsTaskServiceImpl implements SmsTaskService {
         for (int i = 0; i < results.size() && i < recipients.size(); i++) {
             SmsGatewayService.SendResult result = results.get(i);
             SmsTaskRecipient recipient = recipients.get(i);
-            recipient.setStatus(result.success() ? "SUCCESS" : "FAILED");
+            recipient.setStatus(result.success() ? DomainStatus.Recipient.SUCCESS : DomainStatus.Recipient.FAILED);
             recipient.setSentAt(result.success() ? LocalDateTime.now() : null);
             recipient.setErrorMsg(result.errorMsg());
             recipientMapper.updateStatus(recipient);
@@ -140,13 +152,13 @@ public class SmsTaskServiceImpl implements SmsTaskService {
         String successRate;
 
         if (successCount == total) {
-            finalStatus = "已完成";
+            finalStatus = DomainStatus.Task.COMPLETED;
             successRate = "100%";
         } else if (successCount == 0) {
-            finalStatus = "失败";
+            finalStatus = DomainStatus.Task.FAILED;
             successRate = "0%";
         } else {
-            finalStatus = "部分成功";
+            finalStatus = DomainStatus.Task.PARTIAL_SUCCESS;
             successRate = successCount + "/" + total;
         }
 
@@ -163,10 +175,10 @@ public class SmsTaskServiceImpl implements SmsTaskService {
         if (task == null) {
             throw new BusinessException(404, "任务不存在");
         }
-        if (!"待发送".equals(task.getStatus()) && !"草稿".equals(task.getStatus())) {
+        if (!DomainStatus.Task.PENDING.equals(task.getStatus()) && !DomainStatus.Task.DRAFT.equals(task.getStatus())) {
             throw new BusinessException(400, "当前状态不允许取消: " + task.getStatus());
         }
-        updateTaskStatus(task, "已取消");
+        updateTaskStatus(task, DomainStatus.Task.CANCELLED);
     }
 
     @Override
@@ -175,7 +187,7 @@ public class SmsTaskServiceImpl implements SmsTaskService {
         List<SmsTask> all = listAll();
         LocalDateTime now = LocalDateTime.now();
         for (SmsTask task : all) {
-            if ("待发送".equals(task.getStatus()) && task.getPlannedSendTime() != null && task.getPlannedSendTime().isBefore(now)) {
+            if (DomainStatus.Task.PENDING.equals(task.getStatus()) && task.getPlannedSendTime() != null && task.getPlannedSendTime().isBefore(now)) {
                 log.info("Executing scheduled task: {} (planned: {})", task.getId(), task.getPlannedSendTime());
                 try {
                     executeTask(task.getId());

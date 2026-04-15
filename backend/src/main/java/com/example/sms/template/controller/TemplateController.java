@@ -1,6 +1,7 @@
 package com.example.sms.template.controller;
 
 import com.example.sms.common.api.ApiResponse;
+import com.example.sms.common.constant.DomainValueValidator;
 import com.example.sms.common.dto.PageResult;
 import com.example.sms.template.entity.Template;
 import com.example.sms.template.service.TemplateService;
@@ -36,11 +37,13 @@ public class TemplateController {
 
     @PostMapping
     public ApiResponse<Template> create(@Valid @RequestBody Template template) {
+        DomainValueValidator.validateTemplateStatus(template.getStatus());
         return ApiResponse.success(service.create(template));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<Template> update(@PathVariable Long id, @Valid @RequestBody Template template) {
+        DomainValueValidator.validateTemplateStatus(template.getStatus());
         Template payload = new Template(id, template.getName(), template.getCategory(), template.getContent(), template.getStatus(), template.getOwner(), template.getDefaultGroupIds(), template.getUpdatedAt());
         return ApiResponse.success(service.update(payload));
     }

@@ -1,5 +1,6 @@
 package com.example.sms.group.service.impl;
 
+import com.example.sms.common.constant.DomainStatus;
 import com.example.sms.common.dto.PageResult;
 import com.example.sms.common.exception.BusinessException;
 import com.example.sms.group.entity.ContactGroup;
@@ -42,7 +43,17 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public ContactGroup create(ContactGroup group) {
         LocalDateTime now = LocalDateTime.now();
-        ContactGroup created = new ContactGroup(null, group.getName(), group.getOwnerDept(), group.getMemberCount() == null ? 0 : group.getMemberCount(), group.getTags(), group.getLastSyncTime(), group.getStatus(), now, now);
+        ContactGroup created = new ContactGroup(
+            null,
+            group.getName(),
+            group.getOwnerDept(),
+            group.getMemberCount() == null ? 0 : group.getMemberCount(),
+            group.getTags(),
+            group.getLastSyncTime(),
+            StringUtils.hasText(group.getStatus()) ? group.getStatus() : DomainStatus.Group.ENABLED,
+            now,
+            now
+        );
         groupMapper.insert(created);
         return created;
     }

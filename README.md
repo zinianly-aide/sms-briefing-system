@@ -25,6 +25,11 @@
 
 ## 本地开发准备
 
+### 环境要求
+- JDK 21（已实测；本机 Maven 若落到 Java 24 可能触发编译链异常）
+- Node.js 20+
+- Docker / Docker Compose
+
 ### 1) 启动 MySQL
 推荐直接使用仓库内的 Docker Compose：
 
@@ -40,11 +45,17 @@ docker compose up -d mysql
 - password: `sms_pass`
 - root password: `root`
 
-`db/init/01-schema.sql` 会在容器首次启动时自动初始化。
+说明：
+- `db/init/01-schema.sql`、`db/init/02-schema-addons.sql`、`db/init/03-seed-data.sql` 会在“首次创建 MySQL 数据卷”时自动初始化。
+- 如果你本地已经有旧的 `mysql_data` 卷，建议重建库或重新导入 `db/init/*.sql`，否则可能缺少新表/新列/种子账号。
 
 ### 2) 启动 Backend
+推荐显式固定 Java 21：
+
 ```bash
 cd backend
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+export PATH="$JAVA_HOME/bin:$PATH"
 mvn spring-boot:run
 ```
 
@@ -73,6 +84,22 @@ npm run dev
 ```
 
 默认端口：`http://localhost:5173`
+
+说明：
+- 前后端联调时，建议统一使用 `localhost` 访问，不要混用 `127.0.0.1`，避免本地 CORS origin 不一致。
+- 当前已允许的本地前端 origin：`http://localhost:5173`、`http://127.0.0.1:5173`、`http://localhost:5174`、`http://127.0.0.1:5174`。
+
+## 默认账号（初始化种子数据）
+- admin / admin123
+- demo / Demo1234
+
+## 已完成联调验证
+以下流程已在本地完成实测：
+- backend：`mvn test` 通过（99/99，Java 21）
+- frontend：`npm test` 通过（28/28）
+- frontend：`npm run build` 通过
+- API smoke：已验证登录、Dashboard、Contacts、Groups、Templates、Tasks、Briefings 的核心 CRUD / 搜索 / 详情 / clone / execute 流程
+- Browser smoke：已验证登录页、Dashboard、Templates、Groups、Briefings、Tasks 页面可正常加载
 
 ## 已实现能力
 - 仪表盘聚合接口 `/api/dashboard`

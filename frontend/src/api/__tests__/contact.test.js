@@ -22,7 +22,7 @@ describe('contact API', () => {
 
   test('fetchContacts calls correct URL', async () => {
     const data = await fetchContacts();
-    expect(fetch).toHaveBeenCalledWith(`${API_BASE}/contacts`, expect.objectContaining({ headers: expect.any(Object) }));
+    expect(fetch).toHaveBeenCalledWith(`${API_BASE}/contacts?page=1&pageSize=1000`, expect.objectContaining({ headers: expect.any(Object) }));
     expect(data).toEqual([{ id: 1, name: '张三' }]);
   });
 

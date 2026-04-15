@@ -3,12 +3,13 @@ import { Button, Card, DatePicker, Form, Input, InputNumber, Modal, Popconfirm, 
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { cancelTask, createTask, deleteTask, executeTask, fetchTaskRecipients, fetchTasks, searchTasks, updateTask } from '../api/task';
+import { CHANNEL_OPTIONS, TASK_EDITABLE_STATUSES, TASK_STATUS_OPTIONS, getChannelLabel, getRecipientStatusMeta, getTaskStatusMeta } from '../constants/domain';
 
 const defaultForm = {
   title: '',
-  channel: '短信',
+  channel: 'sms',
   plannedSendTime: '',
-  status: '待发送',
+  status: 'pending',
   recipientCount: 0,
   creator: '',
   successRate: '—'
@@ -24,20 +25,20 @@ export default function SendRecordsPage() {
   const [recipientModal, setRecipientModal] = useState({ open: false, taskId: null, taskTitle: '' });
   const [recipients, setRecipients] = useState([]);
 
-  const loadTasks = async (keyword) => {
+  const loadRecords = async (keyword) => {
     try {
       setLoading(true);
       const data = keyword ? await searchTasks(keyword) : await fetchTasks();
-      setRecords(data || []);
+      setRecords(data?.list || data || []);
     } catch (err) {
-      message.error(err.message || '加载发送任务失败');
+      message.error(err.message || '加载任务失败');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadTasks();
+    loadRecords();
   }, []);
 
   const openCreate = () => {
@@ -69,7 +70,7 @@ export default function SendRecordsPage() {
       }
       setOpen(false);
       form.resetFields();
-      loadTasks(searchText);
+      loadRecords(searchText);
     } catch (err) {
       if (err?.errorFields) return;
       message.error(err.message || '保存发送任务失败');
@@ -80,7 +81,7 @@ export default function SendRecordsPage() {
     try {
       await deleteTask(id);
       message.success('发送任务已删除');
-      loadTasks(searchText);
+      loadRecords(searchText);
     } catch (err) {
       message.error(err.message || '删除发送任务失败');
     }
@@ -90,7 +91,7 @@ export default function SendRecordsPage() {
     try {
       await executeTask(id);
       message.success('任务已执行');
-      loadTasks(searchText);
+      loadRecords(searchText);
     } catch (err) {
       message.error(err.message || '执行任务失败');
     }
@@ -100,7 +101,7 @@ export default function SendRecordsPage() {
     try {
       await cancelTask(id);
       message.success('任务已取消');
-      loadTasks(searchText);
+      loadRecords(searchText);
     } catch (err) {
       message.error(err.message || '取消任务失败');
     }
@@ -116,9 +117,12 @@ export default function SendRecordsPage() {
     }
   };
 
+  const safeRecords = Array.isArray(records) ? records : [];
+  const safeRecipients = Array.isArray(recipients) ? recipients : [];
+
   const columns = [
     { title: '任务标题', dataIndex: 'title' },
-    { title: '发送渠道', dataIndex: 'channel', width: 100 },
+    { title: '发送渠道', dataIndex: 'channel', width: 100, render: (channel) => getChannelLabel(channel) },
     {
       title: '预约时间',
       dataIndex: 'plannedSendTime',
@@ -130,8 +134,8 @@ export default function SendRecordsPage() {
       dataIndex: 'status',
       width: 100,
       render: (status) => {
-        const colorMap = { '已完成': 'green', '待发送': 'blue', '草稿': 'default', '发送中': 'processing', '部分成功': 'warning', '失败': 'red', '已取消': 'default' };
-        return <Tag color={colorMap[status] || 'default'}>{status}</Tag>;
+        const meta = getTaskStatusMeta(status);
+        return <Tag color={meta.color}>{meta.label}</Tag>;
       }
     },
     { title: '覆盖人数', dataIndex: 'recipientCount', width: 100 },
@@ -154,10 +158,10 @@ export default function SendRecordsPage() {
       render: (_, record) => (
         <Space size={0}>
           <Button type="link" size="small" icon={<TeamOutlined />} onClick={() => openRecipients(record)}>明细</Button>
-          {(record.status === '待发送' || record.status === '草稿') && (
+          {TASK_EDITABLE_STATUSES.includes(record.status) && (
             <Button type="link" size="small" icon={<PlayCircleOutlined />} onClick={() => handleExecute(record.id)} style={{ color: '#52c41a' }}>执行</Button>
           )}
-          {(record.status === '待发送' || record.status === '草稿') && (
+          {TASK_EDITABLE_STATUSES.includes(record.status) && (
             <Popconfirm title="确认取消该任务？" onConfirm={() => handleCancel(record.id)}>
               <Button type="link" size="small" icon={<StopOutlined />}>取消</Button>
             </Popconfirm>
@@ -171,7 +175,7 @@ export default function SendRecordsPage() {
     }
   ];
 
-  const filtered = records.filter((r) =>
+  const filtered = safeRecords.filter((r) =>
     !searchText || r.title?.toLowerCase().includes(searchText.toLowerCase()) || r.creator?.toLowerCase().includes(searchText.toLowerCase())
   );
 
@@ -185,12 +189,12 @@ export default function SendRecordsPage() {
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              onPressEnter={() => loadTasks(searchText)}
+              onPressEnter={() => loadRecords(searchText)}
               style={{ width: 240 }}
               allowClear
             />
-            <Button type="primary" icon={<SearchOutlined />} onClick={() => loadTasks(searchText)}>查询</Button>
-            <Button icon={<ReloadOutlined />} onClick={() => loadTasks(searchText)}>刷新</Button>
+            <Button type="primary" icon={<SearchOutlined />} onClick={() => loadRecords(searchText)}>查询</Button>
+            <Button icon={<ReloadOutlined />} onClick={() => loadRecords(searchText)}>刷新</Button>
           </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>新建任务</Button>
         </div>
@@ -205,13 +209,13 @@ export default function SendRecordsPage() {
             <Input placeholder="请输入任务标题" />
           </Form.Item>
           <Form.Item label="发送渠道" name="channel">
-            <Select options={[{ label: '短信', value: '短信' }, { label: '短信+企微', value: '短信+企微' }]} />
+            <Select options={CHANNEL_OPTIONS} />
           </Form.Item>
           <Form.Item label="预约时间" name="plannedSendTime">
             <DatePicker showTime style={{ width: '100%' }} placeholder="选择预约发送时间" />
           </Form.Item>
           <Form.Item label="状态" name="status">
-            <Select options={[{ label: '草稿', value: '草稿' }, { label: '待发送', value: '待发送' }, { label: '已完成', value: '已完成' }]} />
+            <Select options={TASK_STATUS_OPTIONS.filter((item) => ['draft', 'pending', 'completed'].includes(item.value))} />
           </Form.Item>
           <Form.Item label="覆盖人数" name="recipientCount">
             <InputNumber min={0} style={{ width: '100%' }} placeholder="0" />
@@ -234,11 +238,19 @@ export default function SendRecordsPage() {
       >
         <Table
           rowKey="id"
-          dataSource={recipients}
+          dataSource={safeRecipients}
           columns={[
             { title: '姓名', dataIndex: 'name', width: 100 },
             { title: '手机号', dataIndex: 'mobile', width: 140 },
-            { title: '状态', dataIndex: 'status', width: 100, render: (s) => <Tag color={s === 'SUCCESS' ? 'green' : 'red'}>{s}</Tag> },
+            {
+              title: '状态',
+              dataIndex: 'status',
+              width: 100,
+              render: (status) => {
+                const meta = getRecipientStatusMeta(status);
+                return <Tag color={meta.color}>{meta.label}</Tag>;
+              }
+            },
             { title: '发送时间', dataIndex: 'sentAt', width: 180 },
             { title: '错误信息', dataIndex: 'errorMsg', ellipsis: true }
           ]}

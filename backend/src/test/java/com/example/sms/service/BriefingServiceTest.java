@@ -3,6 +3,7 @@ package com.example.sms.service;
 import com.example.sms.briefing.entity.Briefing;
 import com.example.sms.briefing.mapper.BriefingMapper;
 import com.example.sms.briefing.service.impl.BriefingServiceImpl;
+import com.example.sms.common.constant.DomainStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +28,7 @@ class BriefingServiceTest {
 
     private final LocalDateTime now = LocalDateTime.now();
 
-    private final Briefing sample = new Briefing(1L, "暴雨简讯", "请注意防汛", 1L, "待审核", "短信", "张三", "V1.0", "1,2", now, "张三", now, null, null, null, null, null);
+    private final Briefing sample = new Briefing(1L, "暴雨简讯", "请注意防汛", 1L, DomainStatus.Briefing.PENDING_REVIEW, DomainStatus.Channel.SMS, "张三", "V1.0", "1,2", now, "张三", now, null, null, null, null, null);
 
     @BeforeEach
     void setUp() {
@@ -61,7 +62,7 @@ class BriefingServiceTest {
     @Test
     void create_shouldReturnCreated() {
         when(briefingMapper.insert(any())).thenReturn(1);
-        Briefing input = new Briefing(null, "新简讯", "内容", null, "草稿", "短信", "李四", "V1.0", "", null, "李四", null, null, null, null, null, null);
+        Briefing input = new Briefing(null, "新简讯", "内容", null, DomainStatus.Briefing.DRAFT, DomainStatus.Channel.SMS, "李四", "V1.0", "", null, "李四", null, null, null, null, null, null);
         Briefing created = service.create(input);
         assertThat(created.getTitle()).isEqualTo("新简讯");
         assertThat(created.getUpdatedAt()).isNotNull();
@@ -71,14 +72,14 @@ class BriefingServiceTest {
     void update_shouldReturnUpdated() {
         when(briefingMapper.selectById(1L)).thenReturn(sample);
         when(briefingMapper.update(any())).thenReturn(1);
-        Briefing input = new Briefing(1L, "暴雨简讯改", "请注意防汛！", 1L, "待发送", "短信+企微", "张三", "V1.1", "1,2,3", now, "张三", now, null, null, null, null, null);
+        Briefing input = new Briefing(1L, "暴雨简讯改", "请注意防汛！", 1L, DomainStatus.Briefing.PENDING_SEND, DomainStatus.Channel.SMS_WECOM, "张三", "V1.1", "1,2,3", now, "张三", now, null, null, null, null, null);
         assertThat(service.update(input).getContent()).isEqualTo("请注意防汛！");
     }
 
     @Test
     void update_shouldThrowWhenNotFound() {
         when(briefingMapper.selectById(999L)).thenReturn(null);
-        Briefing input = new Briefing(999L, "不存在", "无", null, "草稿", "短信", "无", "V1.0", "", now, "无", now, null, null, null, null, null);
+        Briefing input = new Briefing(999L, "不存在", "无", null, DomainStatus.Briefing.DRAFT, DomainStatus.Channel.SMS, "无", "V1.0", "", now, "无", now, null, null, null, null, null);
         assertThatThrownBy(() -> service.update(input)).isInstanceOf(RuntimeException.class)
             .hasMessageContaining("简讯不存在");
     }

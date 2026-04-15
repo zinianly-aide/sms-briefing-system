@@ -3,13 +3,7 @@ import { Button, Card, Input, Popconfirm, Space, Table, Tag, message } from 'ant
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cloneBriefing, deleteBriefing, fetchBriefings, searchBriefings } from '../api/briefing';
-
-const statusConfig = {
-  '待审核': 'orange',
-  '待发送': 'blue',
-  '已发送': 'green',
-  '草稿': 'default'
-};
+import { getBriefingStatusMeta, getChannelLabel } from '../constants/domain';
 
 export default function BriefingListPage() {
   const navigate = useNavigate();
@@ -21,7 +15,7 @@ export default function BriefingListPage() {
     try {
       setLoading(true);
       const data = keyword ? await searchBriefings(keyword) : await fetchBriefings();
-      setItems(data || []);
+      setItems(data?.list || data || []);
     } catch (err) {
       message.error(err.message || '加载简讯失败');
     } finally {
@@ -59,9 +53,12 @@ export default function BriefingListPage() {
       title: '状态',
       dataIndex: 'status',
       width: 100,
-      render: (status) => <Tag color={statusConfig[status] || 'default'}>{status}</Tag>
+      render: (status) => {
+        const meta = getBriefingStatusMeta(status);
+        return <Tag color={meta.color}>{meta.label}</Tag>;
+      }
     },
-    { title: '渠道', dataIndex: 'channel', width: 120 },
+    { title: '渠道', dataIndex: 'channel', width: 120, render: (channel) => getChannelLabel(channel) },
     { title: '作者', dataIndex: 'author', width: 120 },
     { title: '版本', dataIndex: 'version', width: 100 },
     { title: '发送对象', dataIndex: 'audience', ellipsis: true, width: 160 },

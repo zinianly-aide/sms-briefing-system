@@ -13,11 +13,11 @@ public interface GroupMapper {
     @Select("SELECT * FROM contact_group WHERE id = #{id}")
     ContactGroup selectById(@Param("id") Long id);
 
-    @Insert("INSERT INTO contact_group (name, owner_dept, member_count, tags, last_sync_time, created_at, updated_at) VALUES (#{name}, #{ownerDept}, #{memberCount}, #{tags}, #{lastSyncTime}, #{createdAt}, #{updatedAt})")
+    @Insert("INSERT INTO contact_group (name, owner_dept, member_count, tags, last_sync_time, status, created_at, updated_at) VALUES (#{name}, #{ownerDept}, #{memberCount}, #{tags}, #{lastSyncTime}, #{status}, #{createdAt}, #{updatedAt})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(ContactGroup group);
 
-    @Update("UPDATE contact_group SET name = #{name}, owner_dept = #{ownerDept}, member_count = #{memberCount}, tags = #{tags}, last_sync_time = #{lastSyncTime}, updated_at = #{updatedAt} WHERE id = #{id}")
+    @Update("UPDATE contact_group SET name = #{name}, owner_dept = #{ownerDept}, member_count = #{memberCount}, tags = #{tags}, last_sync_time = #{lastSyncTime}, status = #{status}, updated_at = #{updatedAt} WHERE id = #{id}")
     int update(ContactGroup group);
 
     @Delete("DELETE FROM contact_group WHERE id = #{id}")

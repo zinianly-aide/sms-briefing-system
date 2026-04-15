@@ -1,5 +1,6 @@
 package com.example.sms.contact.service.impl;
 
+import com.example.sms.common.constant.DomainStatus;
 import com.example.sms.contact.entity.ContactEntity;
 import com.example.sms.contact.mapper.ContactMapper;
 import com.example.sms.contact.service.HrSyncService;
@@ -50,7 +51,7 @@ public class HrSyncServiceImpl implements HrSyncService {
                 continue;
             }
 
-            ContactEntity contact = new ContactEntity(null, name, mobile, department, title, "active",
+            ContactEntity contact = new ContactEntity(null, name, mobile, department, title, DomainStatus.Contact.ACTIVE,
                 LocalDateTime.now(), LocalDateTime.now());
             contactMapper.insert(contact);
             synced++;

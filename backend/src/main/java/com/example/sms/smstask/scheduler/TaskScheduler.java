@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("smsTaskScheduler")
 @EnableScheduling
 public class TaskScheduler {
     private static final Logger log = LoggerFactory.getLogger(TaskScheduler.class);

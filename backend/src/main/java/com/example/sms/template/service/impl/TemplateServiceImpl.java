@@ -1,5 +1,6 @@
 package com.example.sms.template.service.impl;
 
+import com.example.sms.common.constant.DomainStatus;
 import com.example.sms.common.dto.PageResult;
 import com.example.sms.common.exception.BusinessException;
 import com.example.sms.template.entity.Template;
@@ -41,7 +42,16 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     @Transactional
     public Template create(Template template) {
-        Template created = new Template(null, template.getName(), template.getCategory(), template.getContent(), template.getStatus(), template.getOwner(), template.getDefaultGroupIds(), LocalDateTime.now());
+        Template created = new Template(
+            null,
+            template.getName(),
+            template.getCategory(),
+            template.getContent(),
+            StringUtils.hasText(template.getStatus()) ? template.getStatus() : DomainStatus.Template.ACTIVE,
+            template.getOwner(),
+            template.getDefaultGroupIds(),
+            LocalDateTime.now()
+        );
         templateMapper.insert(created);
         return created;
     }

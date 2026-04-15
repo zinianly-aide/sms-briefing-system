@@ -2,12 +2,13 @@ import { DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, Tooltip, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { createTemplate, deleteTemplate, fetchTemplates, searchTemplates, updateTemplate } from '../api/template';
+import { TEMPLATE_STATUS_OPTIONS, getTemplateStatusMeta } from '../constants/domain';
 
 const defaultForm = {
   name: '',
   category: '',
   content: '',
-  status: '启用中',
+  status: 'active',
   owner: ''
 };
 
@@ -23,7 +24,7 @@ export default function TemplatesPage() {
     try {
       setLoading(true);
       const data = keyword ? await searchTemplates(keyword) : await fetchTemplates();
-      setTemplates(data || []);
+      setTemplates(data?.list || data || []);
     } catch (err) {
       message.error(err.message || '加载模板失败');
     } finally {
@@ -83,6 +84,8 @@ export default function TemplatesPage() {
     }
   };
 
+  const safeTemplates = Array.isArray(templates) ? templates : [];
+
   const columns = [
     { title: '模板名称', dataIndex: 'name', width: 160 },
     { title: '分类', dataIndex: 'category', width: 120 },
@@ -106,7 +109,10 @@ export default function TemplatesPage() {
       title: '状态',
       dataIndex: 'status',
       width: 100,
-      render: (status) => <Tag color={status === '启用中' ? 'green' : 'gold'}>{status}</Tag>
+      render: (status) => {
+        const meta = getTemplateStatusMeta(status);
+        return <Tag color={meta.color}>{meta.label}</Tag>;
+      }
     },
     { title: '维护人', dataIndex: 'owner', width: 120 },
     {
@@ -123,7 +129,7 @@ export default function TemplatesPage() {
     }
   ];
 
-  const filtered = templates.filter((t) =>
+  const filtered = safeTemplates.filter((t) =>
     !searchText || t.name?.toLowerCase().includes(searchText.toLowerCase()) || t.category?.toLowerCase().includes(searchText.toLowerCase())
   );
 
@@ -162,7 +168,7 @@ export default function TemplatesPage() {
             <Input.TextArea rows={5} showCount maxLength={500} placeholder="请输入模板内容" />
           </Form.Item>
           <Form.Item label="状态" name="status">
-            <Select options={[{ label: '启用中', value: '启用中' }, { label: '草稿', value: '草稿' }]} />
+            <Select options={TEMPLATE_STATUS_OPTIONS} />
           </Form.Item>
           <Form.Item label="维护人" name="owner">
             <Input placeholder="请输入维护人" />

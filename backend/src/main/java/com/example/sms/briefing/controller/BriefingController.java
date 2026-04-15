@@ -1,6 +1,8 @@
 package com.example.sms.briefing.controller;
 
 import com.example.sms.briefing.entity.Briefing;
+import com.example.sms.common.constant.DomainStatus;
+import com.example.sms.common.constant.DomainValueValidator;
 import com.example.sms.briefing.service.BriefingService;
 import com.example.sms.common.api.ApiResponse;
 import com.example.sms.common.dto.PageResult;
@@ -36,11 +38,15 @@ public class BriefingController {
 
     @PostMapping
     public ApiResponse<Briefing> create(@Valid @RequestBody Briefing briefing) {
+        DomainValueValidator.validateBriefingStatus(briefing.getStatus());
+        DomainValueValidator.validateChannel(briefing.getChannel());
         return ApiResponse.success(service.create(briefing));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<Briefing> update(@PathVariable Long id, @Valid @RequestBody Briefing briefing) {
+        DomainValueValidator.validateBriefingStatus(briefing.getStatus());
+        DomainValueValidator.validateChannel(briefing.getChannel());
         Briefing payload = new Briefing(id, briefing.getTitle(), briefing.getContent(), briefing.getTemplateId(), briefing.getStatus(), briefing.getChannel(), briefing.getAuthor(), briefing.getVersion(), briefing.getAudience(), briefing.getUpdatedAt(), briefing.getCreatedBy(), briefing.getCreatedAt(), briefing.getDisasterType(), briefing.getDisasterLevel(), briefing.getContentPart2(), briefing.getRemark(), briefing.getLegacyPayload());
         return ApiResponse.success(service.update(payload));
     }
@@ -65,7 +71,7 @@ public class BriefingController {
             return ApiResponse.error(404, "简讯不存在");
         }
         Briefing clone = new Briefing(null, original.getTitle() + " (副本)", original.getContent(), original.getTemplateId(),
-            "草稿", original.getChannel(), original.getAuthor(), "V1.0", original.getAudience(),
+            DomainStatus.Briefing.DRAFT, original.getChannel(), original.getAuthor(), "V1.0", original.getAudience(),
             null, original.getCreatedBy(), null, original.getDisasterType(), original.getDisasterLevel(),
             original.getContentPart2(), original.getRemark(), null);
         return ApiResponse.success(service.create(clone));

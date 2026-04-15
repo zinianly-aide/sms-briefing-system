@@ -1,6 +1,7 @@
 package com.example.sms.group.controller;
 
 import com.example.sms.common.api.ApiResponse;
+import com.example.sms.common.constant.DomainValueValidator;
 import com.example.sms.common.dto.PageResult;
 import com.example.sms.group.entity.ContactGroup;
 import com.example.sms.group.service.GroupService;
@@ -34,11 +35,13 @@ public class GroupController {
 
     @PostMapping
     public ApiResponse<ContactGroup> create(@Valid @RequestBody ContactGroup group) {
+        DomainValueValidator.validateGroupStatus(group.getStatus());
         return ApiResponse.success(service.create(group));
     }
 
     @PutMapping("/{id}")
     public ApiResponse<ContactGroup> update(@PathVariable Long id, @Valid @RequestBody ContactGroup group) {
+        DomainValueValidator.validateGroupStatus(group.getStatus());
         ContactGroup payload = new ContactGroup(id, group.getName(), group.getOwnerDept(), group.getMemberCount(), group.getTags(), group.getLastSyncTime(), group.getStatus(), group.getCreatedAt(), group.getUpdatedAt());
         return ApiResponse.success(service.update(payload));
     }

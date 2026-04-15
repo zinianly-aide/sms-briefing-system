@@ -20,8 +20,8 @@ describe('DashboardPage', () => {
     totalTasks: 8,
     pendingTasks: 2,
     groups: [{ id: 1, name: '销售群', ownerDept: '销售部', memberCount: 10, tags: ['销售'], lastSyncTime: '2026-04-10' }],
-    templates: [{ id: 1, name: '预警模板', category: '预警', content: '请注意安全', status: '启用中', owner: '运营' }],
-    tasks: [{ id: 1, title: '暴雨提醒', channel: '短信', status: '待发送', recipientCount: 10, creator: '张三' }]
+    templates: [{ id: 1, name: '预警模板', category: '预警', content: '请注意安全', status: 'active', owner: '运营' }],
+    tasks: [{ id: 1, title: '暴雨提醒', channel: 'sms', status: 'pending', recipientCount: 10, creator: '张三' }]
   };
 
   test('renders stat cards and overview', () => {

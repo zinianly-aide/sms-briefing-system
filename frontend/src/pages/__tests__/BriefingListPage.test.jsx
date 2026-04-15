@@ -22,7 +22,7 @@ describe('BriefingListPage', () => {
 
   test('renders page with buttons', async () => {
     briefingApi.fetchBriefings.mockResolvedValue([
-      { id: 1, title: '测试简讯', status: '草稿', channel: '短信', author: '张三', version: 'V1.0', audience: '1,2' }
+      { id: 1, title: '测试简讯', status: 'draft', channel: 'sms', author: '张三', version: 'V1.0', audience: '1,2' }
     ]);
 
     render(<BriefingListPage />);
@@ -56,10 +56,10 @@ describe('BriefingListPage', () => {
 
   test('renders status tags with correct colors', async () => {
     briefingApi.fetchBriefings.mockResolvedValue([
-      { id: 1, title: '简讯1', status: '待审核', channel: '短信', author: 'A', version: 'V1.0', audience: '' },
-      { id: 2, title: '简讯2', status: '待发送', channel: '短信', author: 'B', version: 'V1.0', audience: '' },
-      { id: 3, title: '简讯3', status: '已发送', channel: '短信', author: 'C', version: 'V1.0', audience: '' },
-      { id: 4, title: '简讯4', status: '草稿', channel: '短信', author: 'D', version: 'V1.0', audience: '' }
+      { id: 1, title: '简讯1', status: 'pending_review', channel: 'sms', author: 'A', version: 'V1.0', audience: '' },
+      { id: 2, title: '简讯2', status: 'pending_send', channel: 'sms', author: 'B', version: 'V1.0', audience: '' },
+      { id: 3, title: '简讯3', status: 'sent', channel: 'sms', author: 'C', version: 'V1.0', audience: '' },
+      { id: 4, title: '简讯4', status: 'draft', channel: 'sms', author: 'D', version: 'V1.0', audience: '' }
     ]);
 
     render(<BriefingListPage />);

@@ -5,6 +5,7 @@ import com.example.sms.common.exception.BusinessException;
 import com.example.sms.briefing.entity.Briefing;
 import com.example.sms.briefing.mapper.BriefingMapper;
 import com.example.sms.briefing.service.BriefingService;
+import com.example.sms.common.constant.DomainStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -41,7 +42,25 @@ public class BriefingServiceImpl implements BriefingService {
     @Override
     @Transactional
     public Briefing create(Briefing briefing) {
-        Briefing created = new Briefing(null, briefing.getTitle(), briefing.getContent(), briefing.getTemplateId(), briefing.getStatus(), briefing.getChannel(), briefing.getAuthor(), briefing.getVersion(), briefing.getAudience(), LocalDateTime.now(), briefing.getCreatedBy(), LocalDateTime.now(), briefing.getDisasterType(), briefing.getDisasterLevel(), briefing.getContentPart2(), briefing.getRemark(), briefing.getLegacyPayload());
+        Briefing created = new Briefing(
+            null,
+            briefing.getTitle(),
+            briefing.getContent(),
+            briefing.getTemplateId(),
+            StringUtils.hasText(briefing.getStatus()) ? briefing.getStatus() : DomainStatus.Briefing.DRAFT,
+            StringUtils.hasText(briefing.getChannel()) ? briefing.getChannel() : DomainStatus.Channel.SMS,
+            briefing.getAuthor(),
+            briefing.getVersion(),
+            briefing.getAudience(),
+            LocalDateTime.now(),
+            briefing.getCreatedBy(),
+            LocalDateTime.now(),
+            briefing.getDisasterType(),
+            briefing.getDisasterLevel(),
+            briefing.getContentPart2(),
+            briefing.getRemark(),
+            briefing.getLegacyPayload()
+        );
         briefingMapper.insert(created);
         return created;
     }

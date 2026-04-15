@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS contact (
     mobile VARCHAR(32) NOT NULL,
     department VARCHAR(128),
     title VARCHAR(128),
-    status VARCHAR(32) DEFAULT '在岗',
+    status VARCHAR(32) DEFAULT 'active',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS contact_group (
     member_count INT DEFAULT 0,
     tags VARCHAR(512),
     last_sync_time DATETIME,
-    status VARCHAR(32) DEFAULT '启用',
+    status VARCHAR(32) DEFAULT 'enabled',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS briefing_template (
     name VARCHAR(128) NOT NULL,
     category VARCHAR(64) NOT NULL,
     content TEXT NOT NULL,
-    status VARCHAR(32) DEFAULT '启用中',
+    status VARCHAR(32) DEFAULT 'active',
     owner VARCHAR(64),
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

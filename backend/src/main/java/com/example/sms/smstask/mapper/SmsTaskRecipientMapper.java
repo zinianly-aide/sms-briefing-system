@@ -19,7 +19,7 @@ public interface SmsTaskRecipientMapper {
     @Update("UPDATE sms_task_recipient SET status = #{status}, sent_at = #{sentAt}, error_msg = #{errorMsg} WHERE id = #{id}")
     int updateStatus(SmsTaskRecipient recipient);
 
-    @Select("SELECT COUNT(*) FROM sms_task_recipient WHERE task_id = #{taskId} AND status = 'SUCCESS'")
+    @Select("SELECT COUNT(*) FROM sms_task_recipient WHERE task_id = #{taskId} AND status = 'success'")
     int countSuccess(@Param("taskId") Long taskId);
 
     @Select("SELECT COUNT(*) FROM sms_task_recipient WHERE task_id = #{taskId}")

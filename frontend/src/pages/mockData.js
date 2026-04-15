@@ -5,7 +5,7 @@ export const mockTemplates = [
     category: '应急通知',
     content: '【应急中心】今日18:00起启动暴雨值班，请相关同事保持电话畅通。',
     updatedAt: '2026-04-08 18:20',
-    status: '启用中',
+    status: 'active',
     owner: '行政运营'
   },
   {
@@ -14,7 +14,7 @@ export const mockTemplates = [
     category: '常规播报',
     content: '【运营日报】今日新增客户{count}，重点跟进项目{project}。',
     updatedAt: '2026-04-07 09:15',
-    status: '草稿',
+    status: 'draft',
     owner: '市场团队'
   },
   {
@@ -23,7 +23,7 @@ export const mockTemplates = [
     category: '客户通知',
     content: '【服务公告】节日期间值班安排如下，请留意服务窗口时间。',
     updatedAt: '2026-04-06 14:42',
-    status: '启用中',
+    status: 'active',
     owner: '客服中心'
   }
 ];
@@ -36,7 +36,7 @@ export const mockGroups = [
     memberCount: 126,
     lastSyncTime: '2026-04-09 09:00',
     tags: ['销售', '华东', '核心群组'],
-    status: '启用',
+    status: 'enabled',
     syncMode: 'HR自动同步'
   },
   {
@@ -46,7 +46,7 @@ export const mockGroups = [
     memberCount: 32,
     lastSyncTime: '2026-04-09 08:30',
     tags: ['值班', '总部'],
-    status: '启用',
+    status: 'enabled',
     syncMode: '手工维护'
   },
   {
@@ -56,7 +56,7 @@ export const mockGroups = [
     memberCount: 218,
     lastSyncTime: '2026-04-08 20:10',
     tags: ['客户', '华南'],
-    status: '停用',
+    status: 'disabled',
     syncMode: 'CRM同步'
   }
 ];
@@ -65,9 +65,9 @@ export const mockSendRecords = [
   {
     id: 'task-001',
     title: '园区暴雨值班提醒',
-    channel: '短信',
+    channel: 'sms',
     plannedSendTime: '2026-04-09 16:00',
-    status: '待发送',
+    status: 'pending',
     recipientCount: 86,
     creator: '王宁',
     successRate: '—',
@@ -76,9 +76,9 @@ export const mockSendRecords = [
   {
     id: 'task-002',
     title: '客户节假日通知',
-    channel: '短信+企微',
+    channel: 'sms_wecom',
     plannedSendTime: '2026-04-09 10:30',
-    status: '已完成',
+    status: 'completed',
     recipientCount: 218,
     creator: '李青',
     successRate: '98.6%',
@@ -87,9 +87,9 @@ export const mockSendRecords = [
   {
     id: 'task-003',
     title: '市场日报播报',
-    channel: '短信',
+    channel: 'sms',
     plannedSendTime: '2026-04-10 09:00',
-    status: '草稿',
+    status: 'draft',
     recipientCount: 42,
     creator: '周晨',
     successRate: '—',
@@ -106,7 +106,7 @@ export const mockContacts = [
     group: '华东销售群',
     tags: ['核心销售', '上海'],
     source: 'HR同步',
-    status: '有效'
+    status: 'active'
   },
   {
     id: 'ct-002',
@@ -116,7 +116,7 @@ export const mockContacts = [
     group: '总部值班群',
     tags: ['值班', '总部'],
     source: '手工录入',
-    status: '有效'
+    status: 'active'
   },
   {
     id: 'ct-003',
@@ -126,7 +126,7 @@ export const mockContacts = [
     group: '华南客户通知组',
     tags: ['客户', '广州'],
     source: 'CRM同步',
-    status: '停用'
+    status: 'inactive'
   }
 ];
 
@@ -134,8 +134,8 @@ export const mockBriefings = [
   {
     id: 'briefing-001',
     title: '园区暴雨值班提醒',
-    status: '待审核',
-    channel: '短信',
+    status: 'pending_review',
+    channel: 'sms',
     author: '王宁',
     updatedAt: '2026-04-09 11:20',
     version: 'V1.3',

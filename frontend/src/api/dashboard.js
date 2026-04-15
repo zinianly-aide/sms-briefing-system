@@ -1,7 +1,7 @@
 import { request } from './client';
 
 export function fetchDashboard() {
-  return request('/dashboard');
+  return request('/dashboard', {}, {});
 }
 
 export function createTask(payload) {
