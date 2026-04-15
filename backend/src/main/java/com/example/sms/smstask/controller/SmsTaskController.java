@@ -24,8 +24,7 @@ public class SmsTaskController {
     public ApiResponse<PageResult<SmsTask>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {
-        List<SmsTask> list = service.listAll();
-        return ApiResponse.success(PageResult.of(list, list.size(), page, pageSize));
+        return ApiResponse.success(service.listPaged(page, pageSize));
     }
 
     @GetMapping("/{id}")
@@ -54,29 +53,24 @@ public class SmsTaskController {
     }
 
     @GetMapping("/search")
-    public ApiResponse<List<SmsTask>> search(@RequestParam String keyword) {
-        return ApiResponse.success(service.search(keyword));
+    public ApiResponse<PageResult<SmsTask>> search(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ApiResponse.success(service.searchPaged(keyword, page, pageSize));
     }
 
     @PostMapping("/{id}/execute")
     public ApiResponse<String> executeTask(@PathVariable Long id) {
-        try {
-            service.executeTask(id);
-            return ApiResponse.success("任务已执行");
-        } catch (Exception e) {
-            return ApiResponse.error(500, e.getMessage());
-        }
+        service.executeTask(id);
+        return ApiResponse.success("任务已执行");
     }
 
     @PostMapping("/{id}/cancel")
     public ApiResponse<String> cancelTask(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
-        try {
-            String reason = body != null ? body.get("reason") : "";
-            service.cancelTask(id, reason);
-            return ApiResponse.success("任务已取消");
-        } catch (Exception e) {
-            return ApiResponse.error(500, e.getMessage());
-        }
+        String reason = body != null ? body.get("reason") : "";
+        service.cancelTask(id, reason);
+        return ApiResponse.success("任务已取消");
     }
 
     @GetMapping("/{id}/recipients")

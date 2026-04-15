@@ -7,8 +7,6 @@ import com.example.sms.group.service.GroupService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/groups")
 public class GroupController {
@@ -22,8 +20,7 @@ public class GroupController {
     public ApiResponse<PageResult<ContactGroup>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {
-        List<ContactGroup> list = service.listAll();
-        return ApiResponse.success(PageResult.of(list, list.size(), page, pageSize));
+        return ApiResponse.success(service.listPaged(page, pageSize));
     }
 
     @GetMapping("/{id}")
@@ -52,7 +49,10 @@ public class GroupController {
     }
 
     @GetMapping("/search")
-    public ApiResponse<List<ContactGroup>> search(@RequestParam String keyword) {
-        return ApiResponse.success(service.search(keyword));
+    public ApiResponse<PageResult<ContactGroup>> search(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ApiResponse.success(service.searchPaged(keyword, page, pageSize));
     }
 }

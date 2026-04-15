@@ -1,5 +1,7 @@
 package com.example.sms.smstask.service.impl;
 
+import com.example.sms.common.dto.PageResult;
+import com.example.sms.common.exception.BusinessException;
 import com.example.sms.smstask.entity.SmsTask;
 import com.example.sms.smstask.entity.SmsTaskRecipient;
 import com.example.sms.smstask.mapper.SmsTaskMapper;
@@ -34,6 +36,14 @@ public class SmsTaskServiceImpl implements SmsTaskService {
     }
 
     @Override
+    public PageResult<SmsTask> listPaged(int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        List<SmsTask> list = smsTaskMapper.selectPage(pageSize, offset);
+        int total = smsTaskMapper.count();
+        return PageResult.of(list, total, page, pageSize);
+    }
+
+    @Override
     public List<SmsTask> listAll() {
         return smsTaskMapper.selectAll();
     }
@@ -57,7 +67,7 @@ public class SmsTaskServiceImpl implements SmsTaskService {
     public SmsTask update(SmsTask task) {
         SmsTask existing = getById(task.getId());
         if (existing == null) {
-            throw new RuntimeException("发送任务不存在");
+            throw new BusinessException(404, "发送任务不存在");
         }
         SmsTask updated = new SmsTask(task.getId(), task.getTitle(), task.getChannel(), task.getPlannedSendTime(), task.getStatus(), task.getRecipientCount(), task.getCreator(), task.getSuccessRate(), existing.getCreatedAt(), LocalDateTime.now());
         smsTaskMapper.update(updated);
@@ -79,14 +89,25 @@ public class SmsTaskServiceImpl implements SmsTaskService {
     }
 
     @Override
+    public PageResult<SmsTask> searchPaged(String keyword, int page, int pageSize) {
+        if (!StringUtils.hasText(keyword)) {
+            return listPaged(page, pageSize);
+        }
+        int offset = (page - 1) * pageSize;
+        List<SmsTask> list = smsTaskMapper.searchPage(keyword, pageSize, offset);
+        int total = smsTaskMapper.countByKeyword(keyword);
+        return PageResult.of(list, total, page, pageSize);
+    }
+
+    @Override
     @Transactional
     public void executeTask(Long taskId) {
         SmsTask task = getById(taskId);
         if (task == null) {
-            throw new RuntimeException("任务不存在");
+            throw new BusinessException(404, "任务不存在");
         }
         if (!"待发送".equals(task.getStatus()) && !"草稿".equals(task.getStatus())) {
-            throw new RuntimeException("任务状态不允许发送: " + task.getStatus());
+            throw new BusinessException(400, "任务状态不允许发送: " + task.getStatus());
         }
 
         // Update task status to sending
@@ -140,10 +161,10 @@ public class SmsTaskServiceImpl implements SmsTaskService {
     public void cancelTask(Long taskId, String reason) {
         SmsTask task = getById(taskId);
         if (task == null) {
-            throw new RuntimeException("任务不存在");
+            throw new BusinessException(404, "任务不存在");
         }
         if (!"待发送".equals(task.getStatus()) && !"草稿".equals(task.getStatus())) {
-            throw new RuntimeException("当前状态不允许取消: " + task.getStatus());
+            throw new BusinessException(400, "当前状态不允许取消: " + task.getStatus());
         }
         updateTaskStatus(task, "已取消");
     }

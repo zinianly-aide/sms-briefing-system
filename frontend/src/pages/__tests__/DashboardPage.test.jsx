@@ -1,6 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import DashboardPage from '../DashboardPage';
 
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { username: 'testuser', displayName: '测试用户', role: 'admin' },
+    authenticated: true,
+    displayName: '测试用户',
+    login: vi.fn(),
+    logout: vi.fn(),
+  }),
+  AuthProvider: ({ children }) => children,
+}));
+
 describe('DashboardPage', () => {
   const dashboard = {
     totalContacts: 10,

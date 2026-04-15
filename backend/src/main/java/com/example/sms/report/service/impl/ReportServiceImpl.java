@@ -32,11 +32,11 @@ public class ReportServiceImpl implements ReportService {
         List<ContactGroup> groups = groupMapper.selectAll();
         List<Template> templates = templateMapper.selectAll();
         List<SmsTask> tasks = smsTaskMapper.selectAll();
-        int totalContacts = contactMapper.selectAll().size();
-        int activeGroups = (int) groups.stream().filter(group -> "启用".equals(group.getStatus())).count();
-        int templateCount = templates.size();
-        int totalTasks = tasks.size();
-        int pendingTasks = (int) tasks.stream().filter(task -> "待发送".equals(task.getStatus())).count();
+        int totalContacts = contactMapper.count();
+        int activeGroups = groupMapper.countByStatus("启用");
+        int templateCount = templateMapper.count();
+        int totalTasks = smsTaskMapper.count();
+        int pendingTasks = smsTaskMapper.countByStatus("待发送");
 
         return new ReportOverviewResponse(
             totalContacts,

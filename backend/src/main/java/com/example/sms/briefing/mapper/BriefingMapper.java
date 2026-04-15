@@ -26,6 +26,12 @@ public interface BriefingMapper {
     @Select("SELECT * FROM briefing WHERE title LIKE CONCAT('%', #{keyword}, '%') OR author LIKE CONCAT('%', #{keyword}, '%')")
     List<Briefing> search(@Param("keyword") String keyword);
 
+    @Select("SELECT * FROM briefing WHERE title LIKE CONCAT('%', #{keyword}, '%') OR author LIKE CONCAT('%', #{keyword}, '%') ORDER BY id DESC LIMIT #{pageSize} OFFSET #{offset}")
+    List<Briefing> searchPage(@Param("keyword") String keyword, @Param("pageSize") int pageSize, @Param("offset") int offset);
+
+    @Select("SELECT COUNT(*) FROM briefing WHERE title LIKE CONCAT('%', #{keyword}, '%') OR author LIKE CONCAT('%', #{keyword}, '%')")
+    int countByKeyword(@Param("keyword") String keyword);
+
     @Select("SELECT * FROM briefing ORDER BY id DESC LIMIT #{pageSize} OFFSET #{offset}")
     List<Briefing> selectPage(@Param("pageSize") int pageSize, @Param("offset") int offset);
 

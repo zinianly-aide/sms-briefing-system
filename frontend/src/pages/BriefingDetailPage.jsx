@@ -1,6 +1,7 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Col, Descriptions, Row, Space, Spin, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { fetchBriefing } from '../api/briefing';
 
 const statusConfig = {
@@ -10,17 +11,19 @@ const statusConfig = {
   '草稿': 'default'
 };
 
-export default function BriefingDetailPage({ briefingId, onBack }) {
+export default function BriefingDetailPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [briefing, setBriefing] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!briefingId) return;
+    if (!id) return;
     const loadDetail = async () => {
       try {
         setLoading(true);
-        const data = await fetchBriefing(briefingId);
+        const data = await fetchBriefing(id);
         setBriefing(data);
         setError('');
       } catch (err) {
@@ -30,9 +33,9 @@ export default function BriefingDetailPage({ briefingId, onBack }) {
       }
     };
     loadDetail();
-  }, [briefingId]);
+  }, [id]);
 
-  if (!briefingId) {
+  if (!id) {
     return <Typography.Text>请先选择一条简讯记录</Typography.Text>;
   }
 
@@ -54,7 +57,7 @@ export default function BriefingDetailPage({ briefingId, onBack }) {
 
   return (
     <Space direction="vertical" size={20} style={{ width: '100%' }}>
-      <Button type="text" icon={<ArrowLeftOutlined />} onClick={onBack} style={{ padding: 0 }}>
+      <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate('/briefings')} style={{ padding: 0 }}>
         返回列表
       </Button>
       <Card className="soft-card" bordered={false} title={briefing.title}>

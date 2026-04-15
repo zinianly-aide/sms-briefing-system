@@ -2,13 +2,17 @@ import { ArrowLeftOutlined, FileTextOutlined, SendOutlined, TeamOutlined } from 
 import { Alert, Button, Card, Col, DatePicker, Form, Input, Progress, Row, Select, Space, Typography, message } from 'antd';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createBriefing } from '../api/briefing';
 import { fetchGroupMembers, fetchGroups } from '../api/group';
 import { fetchTemplates } from '../api/template';
 import ConfirmSendModal from '../components/ConfirmSendModal';
 import RecipientPreview from '../components/RecipientPreview';
+import { useAuth } from '../context/AuthContext';
 
-export default function BriefingEditorPage({ onCreated, onCancel }) {
+export default function BriefingEditorPage() {
+  const navigate = useNavigate();
+  const { displayName } = useAuth();
   const [form] = Form.useForm();
   const [preview, setPreview] = useState('');
   const [groups, setGroups] = useState([]);
@@ -78,10 +82,10 @@ export default function BriefingEditorPage({ onCreated, onCancel }) {
         templateId: values.templateId,
         status: values.scheduleType === '立即' ? '待发送' : '待审核',
         channel: values.channel,
-        author: '当前用户',
+        author: displayName,
         version: 'V1.0',
         audience: (values.groupIds || []).join(','),
-        createdBy: '当前用户',
+        createdBy: displayName,
         disasterType: values.disasterType || null,
         disasterLevel: values.disasterLevel || null,
         contentPart2: values.contentPart2 || null,
@@ -92,7 +96,11 @@ export default function BriefingEditorPage({ onCreated, onCancel }) {
       form.resetFields();
       setPreview('');
       setRecipients([]);
-      onCreated?.(created);
+      if (created?.id) {
+        navigate(`/briefings/${created.id}`);
+      } else {
+        navigate('/briefings');
+      }
     } catch (err) {
       message.error(err.message || '提交简讯失败');
     } finally {
@@ -105,7 +113,7 @@ export default function BriefingEditorPage({ onCreated, onCancel }) {
 
   return (
     <Space direction="vertical" size={20} style={{ width: '100%' }}>
-      <Button type="text" icon={<ArrowLeftOutlined />} onClick={onCancel} style={{ padding: 0 }}>
+      <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate('/briefings')} style={{ padding: 0 }}>
         返回简讯列表
       </Button>
 

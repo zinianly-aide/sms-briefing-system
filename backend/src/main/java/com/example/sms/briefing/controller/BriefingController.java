@@ -22,8 +22,7 @@ public class BriefingController {
     public ApiResponse<PageResult<Briefing>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize) {
-        List<Briefing> list = service.listAll();
-        return ApiResponse.success(PageResult.of(list, list.size(), page, pageSize));
+        return ApiResponse.success(service.listPaged(page, pageSize));
     }
 
     @GetMapping("/{id}")
@@ -52,8 +51,11 @@ public class BriefingController {
     }
 
     @GetMapping("/search")
-    public ApiResponse<List<Briefing>> search(@RequestParam String keyword) {
-        return ApiResponse.success(service.search(keyword));
+    public ApiResponse<PageResult<Briefing>> search(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return ApiResponse.success(service.searchPaged(keyword, page, pageSize));
     }
 
     @PostMapping("/{id}/clone")

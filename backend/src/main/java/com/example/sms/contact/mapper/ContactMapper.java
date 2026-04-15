@@ -44,9 +44,18 @@ public interface ContactMapper {
     @Select("SELECT * FROM contact WHERE name LIKE CONCAT('%', #{keyword}, '%') OR mobile LIKE CONCAT('%', #{keyword}, '%')")
     List<ContactEntity> searchByKeyword(@Param("keyword") String keyword);
 
+    @Select("SELECT * FROM contact WHERE name LIKE CONCAT('%', #{keyword}, '%') OR mobile LIKE CONCAT('%', #{keyword}, '%') ORDER BY id DESC LIMIT #{pageSize} OFFSET #{offset}")
+    List<ContactEntity> searchByKeywordPage(@Param("keyword") String keyword, @Param("pageSize") int pageSize, @Param("offset") int offset);
+
+    @Select("SELECT COUNT(*) FROM contact WHERE name LIKE CONCAT('%', #{keyword}, '%') OR mobile LIKE CONCAT('%', #{keyword}, '%')")
+    int countByKeyword(@Param("keyword") String keyword);
+
     @Select("SELECT * FROM contact ORDER BY id DESC LIMIT #{pageSize} OFFSET #{offset}")
     List<ContactEntity> selectPage(@Param("pageSize") int pageSize, @Param("offset") int offset);
 
     @Select("SELECT COUNT(*) FROM contact")
     int count();
+
+    @Select("SELECT COUNT(*) FROM contact WHERE status = #{status}")
+    int countByStatus(@Param("status") String status);
 }

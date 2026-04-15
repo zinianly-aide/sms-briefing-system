@@ -1,7 +1,8 @@
-import { Alert, Button, Spin, message } from 'antd';
+import { Alert, Spin, message } from 'antd';
 import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { fetchDashboard } from './api/dashboard';
-import { clearAuth, getUserInfo, isLoggedIn } from './api/auth';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import AppLayout from './layouts/AppLayout';
 import LoginPage from './pages/LoginPage';
 import ContactsPage from './pages/ContactsPage';
@@ -14,16 +15,29 @@ import BriefingDetailPage from './pages/BriefingDetailPage';
 import BriefingListPage from './pages/BriefingListPage';
 import SettingsPage from './pages/SettingsPage';
 
-export default function App() {
-  const [authenticated, setAuthenticated] = useState(isLoggedIn());
-  const [loading, setLoading] = useState(true);
+function ProtectedLayout() {
   const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activePage, setActivePage] = useState('dashboard');
-  const [currentBriefingId, setCurrentBriefingId] = useState(null);
-  const [briefingView, setBriefingView] = useState('list');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout, displayName } = useAuth();
 
-  const userInfo = getUserInfo();
+  const isActive = (path) => {
+    const key = path.replace('/', '') || 'dashboard';
+    return location.pathname.startsWith(path);
+  };
+
+  const getActiveKey = () => {
+    const path = location.pathname;
+    if (path.startsWith('/contacts')) return 'contacts';
+    if (path.startsWith('/groups')) return 'groups';
+    if (path.startsWith('/templates')) return 'templates';
+    if (path.startsWith('/briefings')) return 'briefing';
+    if (path.startsWith('/tasks')) return 'tasks';
+    if (path.startsWith('/settings')) return 'settings';
+    return 'dashboard';
+  };
 
   const loadDashboard = async () => {
     try {
@@ -39,76 +53,55 @@ export default function App() {
     }
   };
 
-  const handleLogin = () => {
-    setAuthenticated(true);
-    setActivePage('dashboard');
-  };
-
-  const handleLogout = () => {
-    clearAuth();
-    setAuthenticated(false);
-    setDashboard(null);
-  };
-
   useEffect(() => {
-    if (authenticated && activePage === 'dashboard') {
+    if (location.pathname === '/') {
       loadDashboard();
-    } else if (authenticated) {
+    } else {
       setLoading(false);
     }
-  }, [activePage, authenticated]);
+  }, [location.pathname]);
 
-  if (!authenticated) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
-
-  const renderPage = () => {
-    if (activePage === 'contacts') {
-      return <ContactsPage />;
-    }
-    if (activePage === 'dashboard') {
-      return loading ? <div className="loading-wrap"><Spin size="large" /></div> : <DashboardPage dashboard={dashboard} onTaskCreated={loadDashboard} />;
-    }
-    if (activePage === 'groups') {
-      return <GroupsPage />;
-    }
-    if (activePage === 'templates') {
-      return <TemplatesPage />;
-    }
-    if (activePage === 'tasks') {
-      return <SendRecordsPage />;
-    }
-    if (activePage === 'settings') {
-      return <SettingsPage />;
-    }
-    if (activePage === 'briefing') {
-      if (briefingView === 'detail' && currentBriefingId) {
-        return <BriefingDetailPage briefingId={currentBriefingId} onBack={() => setBriefingView('list')} />;
-      }
-      if (briefingView === 'editor') {
-        return <BriefingEditorPage onCreated={(created) => {
-          setCurrentBriefingId(created?.id);
-          setBriefingView('detail');
-        }} onCancel={() => setBriefingView('list')} />;
-      }
-      return <BriefingListPage onCreate={() => setBriefingView('editor')} onView={(id) => {
-        setCurrentBriefingId(id);
-        setBriefingView('detail');
-      }} />;
-    }
-    return <ContactsPage />;
+  const handleNavigate = (key) => {
+    const routes = {
+      dashboard: '/',
+      contacts: '/contacts',
+      groups: '/groups',
+      templates: '/templates',
+      briefing: '/briefings',
+      tasks: '/tasks',
+      settings: '/settings',
+    };
+    navigate(routes[key] || '/');
   };
 
   return (
-    <AppLayout activeKey={activePage} username={userInfo?.displayName} onNavigate={(key) => {
-      setActivePage(key);
-      if (key !== 'briefing') {
-        setBriefingView('list');
-        setCurrentBriefingId(null);
-      }
-    }} onLogout={handleLogout}>
+    <AppLayout activeKey={getActiveKey()} username={displayName} onNavigate={handleNavigate} onLogout={logout}>
       {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
-      {renderPage()}
+      <Routes>
+        <Route path="/" element={loading ? <div className="loading-wrap"><Spin size="large" /></div> : <DashboardPage dashboard={dashboard} onTaskCreated={loadDashboard} />} />
+        <Route path="/contacts" element={<ContactsPage />} />
+        <Route path="/groups" element={<GroupsPage />} />
+        <Route path="/templates" element={<TemplatesPage />} />
+        <Route path="/briefings" element={<BriefingListPage />} />
+        <Route path="/briefings/new" element={<BriefingEditorPage />} />
+        <Route path="/briefings/:id" element={<BriefingDetailPage />} />
+        <Route path="/tasks" element={<SendRecordsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </AppLayout>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/*" element={<ProtectedLayout />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

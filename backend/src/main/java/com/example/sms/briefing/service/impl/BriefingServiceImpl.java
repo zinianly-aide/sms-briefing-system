@@ -1,5 +1,7 @@
 package com.example.sms.briefing.service.impl;
 
+import com.example.sms.common.dto.PageResult;
+import com.example.sms.common.exception.BusinessException;
 import com.example.sms.briefing.entity.Briefing;
 import com.example.sms.briefing.mapper.BriefingMapper;
 import com.example.sms.briefing.service.BriefingService;
@@ -16,6 +18,14 @@ public class BriefingServiceImpl implements BriefingService {
 
     public BriefingServiceImpl(BriefingMapper briefingMapper) {
         this.briefingMapper = briefingMapper;
+    }
+
+    @Override
+    public PageResult<Briefing> listPaged(int page, int pageSize) {
+        int offset = (page - 1) * pageSize;
+        List<Briefing> list = briefingMapper.selectPage(pageSize, offset);
+        int total = briefingMapper.count();
+        return PageResult.of(list, total, page, pageSize);
     }
 
     @Override
@@ -41,7 +51,7 @@ public class BriefingServiceImpl implements BriefingService {
     public Briefing update(Briefing briefing) {
         Briefing existing = getById(briefing.getId());
         if (existing == null) {
-            throw new RuntimeException("简讯不存在");
+            throw new BusinessException(404, "简讯不存在");
         }
         Briefing updated = new Briefing(briefing.getId(), briefing.getTitle(), briefing.getContent(), briefing.getTemplateId(), briefing.getStatus(), briefing.getChannel(), briefing.getAuthor(), briefing.getVersion(), briefing.getAudience(), LocalDateTime.now(), briefing.getCreatedBy(), existing.getCreatedAt() != null ? existing.getCreatedAt() : LocalDateTime.now(), briefing.getDisasterType(), briefing.getDisasterLevel(), briefing.getContentPart2(), briefing.getRemark(), briefing.getLegacyPayload());
         briefingMapper.update(updated);
@@ -60,5 +70,16 @@ public class BriefingServiceImpl implements BriefingService {
             return listAll();
         }
         return briefingMapper.search(keyword);
+    }
+
+    @Override
+    public PageResult<Briefing> searchPaged(String keyword, int page, int pageSize) {
+        if (!StringUtils.hasText(keyword)) {
+            return listPaged(page, pageSize);
+        }
+        int offset = (page - 1) * pageSize;
+        List<Briefing> list = briefingMapper.searchPage(keyword, pageSize, offset);
+        int total = briefingMapper.countByKeyword(keyword);
+        return PageResult.of(list, total, page, pageSize);
     }
 }
