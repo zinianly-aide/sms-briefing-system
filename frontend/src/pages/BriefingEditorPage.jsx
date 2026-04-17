@@ -34,8 +34,8 @@ export default function BriefingEditorPage() {
     const loadOptions = async () => {
       try {
         const [groupData, templateData] = await Promise.all([fetchGroups(), fetchTemplates()]);
-        setGroups(Array.isArray(groupData) ? groupData : []);
-        setTemplates(Array.isArray(templateData) ? templateData : []);
+        setGroups(groupData?.list || groupData || []);
+        setTemplates(templateData?.list || templateData || []);
       } catch (err) {
         setError(err.message || '加载选项失败');
       }
