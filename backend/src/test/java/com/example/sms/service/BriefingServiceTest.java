@@ -4,6 +4,13 @@ import com.example.sms.briefing.entity.Briefing;
 import com.example.sms.briefing.mapper.BriefingMapper;
 import com.example.sms.briefing.service.impl.BriefingServiceImpl;
 import com.example.sms.common.constant.DomainStatus;
+import com.example.sms.group.entity.GroupMember;
+import com.example.sms.group.service.GroupMemberService;
+import com.example.sms.smstask.entity.SmsTask;
+import com.example.sms.smstask.entity.SmsTaskRecipient;
+import com.example.sms.smstask.mapper.SmsTaskRecipientMapper;
+import com.example.sms.smstask.service.SmsTaskService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +31,15 @@ class BriefingServiceTest {
     @Mock
     private BriefingMapper briefingMapper;
 
+    @Mock
+    private SmsTaskService smsTaskService;
+
+    @Mock
+    private GroupMemberService groupMemberService;
+
+    @Mock
+    private SmsTaskRecipientMapper smsTaskRecipientMapper;
+
     private BriefingServiceImpl service;
 
     private final LocalDateTime now = LocalDateTime.now();
@@ -32,7 +48,7 @@ class BriefingServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new BriefingServiceImpl(briefingMapper);
+        service = new BriefingServiceImpl(briefingMapper, smsTaskService, groupMemberService, smsTaskRecipientMapper, new ObjectMapper());
     }
 
     @Test
@@ -66,6 +82,55 @@ class BriefingServiceTest {
         Briefing created = service.create(input);
         assertThat(created.getTitle()).isEqualTo("新简讯");
         assertThat(created.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    void create_shouldCreateRecurringTaskForRecurringSchedule() {
+        when(briefingMapper.insert(any())).thenReturn(1);
+        when(groupMemberService.getMembersByGroupId(10L)).thenReturn(List.of(
+            buildMember(10L, 100L, "张三", "13800000000"),
+            buildMember(10L, 101L, "李四", "13900000000")
+        ));
+        when(groupMemberService.getMembersByGroupId(11L)).thenReturn(List.of(
+            buildMember(11L, 100L, "张三", "13800000000")
+        ));
+        when(smsTaskService.create(any())).thenAnswer(invocation -> {
+            SmsTask task = invocation.getArgument(0);
+            task.setId(99L);
+            return task;
+        });
+
+        Briefing input = new Briefing(
+            null,
+            "循环通知",
+            "内容",
+            1L,
+            DomainStatus.Briefing.PENDING_SEND,
+            DomainStatus.Channel.SMS,
+            "李四",
+            "V1.0",
+            "10,11",
+            null,
+            "李四",
+            null,
+            null,
+            null,
+            null,
+            null,
+            "{\"scheduleType\":\"recurring\",\"scheduledTime\":\"2030-01-01T09:00:00\",\"recurrenceInterval\":2,\"recurrenceUnit\":\"day\",\"recurrenceEndTime\":\"2030-01-15T09:00:00\",\"groupIds\":[10,11]}"
+        );
+
+        service.create(input);
+
+        verify(smsTaskService).create(argThat(task ->
+            "循环通知".equals(task.getTitle())
+                && "recurring".equals(task.getScheduleType())
+                && Integer.valueOf(2).equals(task.getRecurrenceInterval())
+                && "day".equals(task.getRecurrenceUnit())
+                && task.getPlannedSendTime() != null
+                && Integer.valueOf(2).equals(task.getRecipientCount())
+        ));
+        verify(smsTaskRecipientMapper, times(2)).insert(any(SmsTaskRecipient.class));
     }
 
     @Test
@@ -112,5 +177,12 @@ class BriefingServiceTest {
     void search_noMatch_shouldReturnEmpty() {
         when(briefingMapper.search("不存在")).thenReturn(List.of());
         assertThat(service.search("不存在")).isEmpty();
+    }
+
+    private GroupMember buildMember(Long groupId, Long contactId, String name, String mobile) {
+        GroupMember member = new GroupMember(null, groupId, contactId, "成员", now);
+        member.setContactName(name);
+        member.setContactMobile(mobile);
+        return member;
     }
 }

@@ -2,6 +2,7 @@ package com.example.sms.service;
 
 import com.example.sms.common.constant.DomainStatus;
 import com.example.sms.smstask.entity.SmsTask;
+import com.example.sms.smstask.entity.SmsTaskRecipient;
 import com.example.sms.smstask.mapper.SmsTaskMapper;
 import com.example.sms.smstask.mapper.SmsTaskRecipientMapper;
 import com.example.sms.smstask.service.SmsGatewayService;
@@ -120,5 +121,46 @@ class SmsTaskServiceTest {
     void search_noMatch_shouldReturnEmpty() {
         when(smsTaskMapper.search("不存在")).thenReturn(List.of());
         assertThat(service.search("不存在")).isEmpty();
+    }
+
+    @Test
+    void scanAndExecuteScheduledTasks_shouldRescheduleRecurringTask() {
+        LocalDateTime plannedTime = now.minusMinutes(5);
+        LocalDateTime recurrenceEndTime = now.plusDays(3);
+        SmsTask recurringTask = new SmsTask(
+            2L,
+            "每日暴雨提醒",
+            DomainStatus.Channel.SMS,
+            plannedTime,
+            DomainStatus.Task.PENDING,
+            1,
+            "张三",
+            "—",
+            now,
+            now,
+            "recurring",
+            1,
+            "day",
+            recurrenceEndTime,
+            0,
+            null
+        );
+
+        SmsTaskRecipient recipient = new SmsTaskRecipient(1L, 2L, 1L, "13800000000", "张三", DomainStatus.Recipient.PENDING, null, null);
+
+        when(smsTaskMapper.selectAll()).thenReturn(List.of(recurringTask));
+        when(smsTaskMapper.selectById(2L)).thenReturn(recurringTask);
+        when(recipientMapper.selectByTaskId(2L)).thenReturn(List.of(recipient));
+        when(smsGatewayService.send(any(), any())).thenReturn(List.of(new SmsGatewayService.SendResult("13800000000", true, null)));
+
+        service.scanAndExecuteScheduledTasks();
+
+        verify(smsTaskMapper, atLeastOnce()).update(argThat(task ->
+            task.getId().equals(2L)
+                && DomainStatus.Task.PENDING.equals(task.getStatus())
+                && task.getPlannedSendTime() != null
+                && task.getPlannedSendTime().isAfter(plannedTime)
+                && Integer.valueOf(1).equals(task.getRecurrenceCount())
+        ));
     }
 }

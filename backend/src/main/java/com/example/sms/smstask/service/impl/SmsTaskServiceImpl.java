@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -68,7 +68,13 @@ public class SmsTaskServiceImpl implements SmsTaskService {
             task.getCreator(),
             task.getSuccessRate(),
             now,
-            now
+            now,
+            normalizeScheduleType(task.getScheduleType()),
+            task.getRecurrenceInterval(),
+            task.getRecurrenceUnit(),
+            task.getRecurrenceEndTime(),
+            task.getRecurrenceCount() == null ? 0 : task.getRecurrenceCount(),
+            task.getRecurrenceMaxCount()
         );
         smsTaskMapper.insert(created);
         return created;
@@ -81,7 +87,21 @@ public class SmsTaskServiceImpl implements SmsTaskService {
         if (existing == null) {
             throw new BusinessException(404, "发送任务不存在");
         }
-        SmsTask updated = new SmsTask(task.getId(), task.getTitle(), task.getChannel(), task.getPlannedSendTime(), task.getStatus(), task.getRecipientCount(), task.getCreator(), task.getSuccessRate(), existing.getCreatedAt(), LocalDateTime.now());
+        SmsTask updated = copyTask(existing);
+        updated.setTitle(task.getTitle());
+        updated.setChannel(task.getChannel());
+        updated.setPlannedSendTime(task.getPlannedSendTime());
+        updated.setStatus(task.getStatus());
+        updated.setRecipientCount(task.getRecipientCount());
+        updated.setCreator(task.getCreator());
+        updated.setSuccessRate(task.getSuccessRate());
+        updated.setUpdatedAt(LocalDateTime.now());
+        updated.setScheduleType(normalizeScheduleType(task.getScheduleType()));
+        updated.setRecurrenceInterval(task.getRecurrenceInterval());
+        updated.setRecurrenceUnit(task.getRecurrenceUnit());
+        updated.setRecurrenceEndTime(task.getRecurrenceEndTime());
+        updated.setRecurrenceCount(task.getRecurrenceCount() == null ? existing.getRecurrenceCount() : task.getRecurrenceCount());
+        updated.setRecurrenceMaxCount(task.getRecurrenceMaxCount());
         smsTaskMapper.update(updated);
         return updated;
     }
@@ -162,10 +182,23 @@ public class SmsTaskServiceImpl implements SmsTaskService {
             successRate = successCount + "/" + total;
         }
 
-        SmsTask updated = new SmsTask(task.getId(), task.getTitle(), task.getChannel(), task.getPlannedSendTime(),
-            finalStatus, total, task.getCreator(), successRate, task.getCreatedAt(), LocalDateTime.now());
+        int nextRecurrenceCount = (task.getRecurrenceCount() == null ? 0 : task.getRecurrenceCount()) + 1;
+        LocalDateTime nextPlannedTime = calculateNextPlannedTime(task);
+        boolean shouldContinueRecurring = isRecurringTask(task) && canContinueRecurring(task, nextRecurrenceCount, nextPlannedTime);
+
+        SmsTask updated = copyTask(task);
+        updated.setRecipientCount(total);
+        updated.setSuccessRate(successRate);
+        updated.setUpdatedAt(LocalDateTime.now());
+        updated.setRecurrenceCount(nextRecurrenceCount);
+        if (shouldContinueRecurring) {
+            updated.setStatus(DomainStatus.Task.PENDING);
+            updated.setPlannedSendTime(nextPlannedTime);
+        } else {
+            updated.setStatus(finalStatus);
+        }
         smsTaskMapper.update(updated);
-        log.info("Task {} executed: {} sent, status={}", taskId, successCount, finalStatus);
+        log.info("Task {} executed: {} sent, status={}, recurring={}", taskId, successCount, updated.getStatus(), shouldContinueRecurring);
     }
 
     @Override
@@ -187,8 +220,8 @@ public class SmsTaskServiceImpl implements SmsTaskService {
         List<SmsTask> all = listAll();
         LocalDateTime now = LocalDateTime.now();
         for (SmsTask task : all) {
-            if (DomainStatus.Task.PENDING.equals(task.getStatus()) && task.getPlannedSendTime() != null && task.getPlannedSendTime().isBefore(now)) {
-                log.info("Executing scheduled task: {} (planned: {})", task.getId(), task.getPlannedSendTime());
+            if (DomainStatus.Task.PENDING.equals(task.getStatus()) && task.getPlannedSendTime() != null && !task.getPlannedSendTime().isAfter(now)) {
+                log.info("Executing scheduled task: {} (planned: {}, scheduleType={})", task.getId(), task.getPlannedSendTime(), task.getScheduleType());
                 try {
                     executeTask(task.getId());
                 } catch (Exception e) {
@@ -204,8 +237,62 @@ public class SmsTaskServiceImpl implements SmsTaskService {
     }
 
     private void updateTaskStatus(SmsTask task, String status) {
-        SmsTask updated = new SmsTask(task.getId(), task.getTitle(), task.getChannel(), task.getPlannedSendTime(),
-            status, task.getRecipientCount(), task.getCreator(), task.getSuccessRate(), task.getCreatedAt(), LocalDateTime.now());
+        SmsTask updated = copyTask(task);
+        updated.setStatus(status);
+        updated.setUpdatedAt(LocalDateTime.now());
         smsTaskMapper.update(updated);
+    }
+
+    private SmsTask copyTask(SmsTask task) {
+        return new SmsTask(
+            task.getId(),
+            task.getTitle(),
+            task.getChannel(),
+            task.getPlannedSendTime(),
+            task.getStatus(),
+            task.getRecipientCount(),
+            task.getCreator(),
+            task.getSuccessRate(),
+            task.getCreatedAt(),
+            task.getUpdatedAt(),
+            normalizeScheduleType(task.getScheduleType()),
+            task.getRecurrenceInterval(),
+            task.getRecurrenceUnit(),
+            task.getRecurrenceEndTime(),
+            task.getRecurrenceCount() == null ? 0 : task.getRecurrenceCount(),
+            task.getRecurrenceMaxCount()
+        );
+    }
+
+    private boolean isRecurringTask(SmsTask task) {
+        return "recurring".equalsIgnoreCase(normalizeScheduleType(task.getScheduleType()));
+    }
+
+    private String normalizeScheduleType(String scheduleType) {
+        return StringUtils.hasText(scheduleType) ? scheduleType.toLowerCase(Locale.ROOT) : "immediate";
+    }
+
+    private LocalDateTime calculateNextPlannedTime(SmsTask task) {
+        if (!isRecurringTask(task) || task.getPlannedSendTime() == null) {
+            return null;
+        }
+        int interval = task.getRecurrenceInterval() == null || task.getRecurrenceInterval() <= 0 ? 1 : task.getRecurrenceInterval();
+        String unit = StringUtils.hasText(task.getRecurrenceUnit()) ? task.getRecurrenceUnit().toLowerCase(Locale.ROOT) : "day";
+        return switch (unit) {
+            case "hour" -> task.getPlannedSendTime().plusHours(interval);
+            case "week" -> task.getPlannedSendTime().plusWeeks(interval);
+            case "month" -> task.getPlannedSendTime().plusMonths(interval);
+            default -> task.getPlannedSendTime().plusDays(interval);
+        };
+    }
+
+    private boolean canContinueRecurring(SmsTask task, int nextRecurrenceCount, LocalDateTime nextPlannedTime) {
+        if (nextPlannedTime == null) {
+            return false;
+        }
+        if (task.getRecurrenceMaxCount() != null && nextRecurrenceCount >= task.getRecurrenceMaxCount()) {
+            return false;
+        }
+        return task.getRecurrenceEndTime() == null || !nextPlannedTime.isAfter(task.getRecurrenceEndTime());
     }
 }

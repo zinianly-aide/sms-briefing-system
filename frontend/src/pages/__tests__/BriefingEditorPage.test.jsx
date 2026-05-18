@@ -66,4 +66,24 @@ describe('BriefingEditorPage', () => {
     fireEvent.mouseDown(groupSelect);
     expect(await screen.findByText('技术团队群')).toBeInTheDocument();
   });
+
+  test('shows recurring schedule fields when recurring mode is selected', async () => {
+    groupApi.fetchGroups.mockResolvedValue({ list: [], total: 0, page: 1, pageSize: 1000 });
+    templateApi.fetchTemplates.mockResolvedValue({ list: [], total: 0, page: 1, pageSize: 1000 });
+
+    render(<BriefingEditorPage />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('调度方式')).toBeInTheDocument();
+    });
+
+    const scheduleTypeSelect = screen.getByLabelText('调度方式');
+    fireEvent.mouseDown(scheduleTypeSelect);
+    fireEvent.click(await screen.findByText('定时循环发送'));
+
+    expect(await screen.findByLabelText('首次发送时间')).toBeInTheDocument();
+    expect(screen.getByLabelText('循环间隔')).toBeInTheDocument();
+    expect(screen.getByLabelText('循环单位')).toBeInTheDocument();
+    expect(screen.getByLabelText('循环结束时间')).toBeInTheDocument();
+  });
 });

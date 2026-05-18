@@ -48,7 +48,7 @@ public class SmsTaskController {
     public ApiResponse<SmsTask> update(@PathVariable Long id, @Valid @RequestBody SmsTask task) {
         DomainValueValidator.validateTaskStatus(task.getStatus());
         DomainValueValidator.validateChannel(task.getChannel());
-        SmsTask payload = new SmsTask(id, task.getTitle(), task.getChannel(), task.getPlannedSendTime(), task.getStatus(), task.getRecipientCount(), task.getCreator(), task.getSuccessRate(), task.getCreatedAt(), task.getUpdatedAt());
+        SmsTask payload = new SmsTask(id, task.getTitle(), task.getChannel(), task.getPlannedSendTime(), task.getStatus(), task.getRecipientCount(), task.getCreator(), task.getSuccessRate(), task.getCreatedAt(), task.getUpdatedAt(), task.getScheduleType(), task.getRecurrenceInterval(), task.getRecurrenceUnit(), task.getRecurrenceEndTime(), task.getRecurrenceCount(), task.getRecurrenceMaxCount());
         return ApiResponse.success(service.update(payload));
     }
 

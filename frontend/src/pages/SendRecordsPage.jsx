@@ -8,7 +8,12 @@ import { CHANNEL_OPTIONS, TASK_EDITABLE_STATUSES, TASK_STATUS_OPTIONS, getChanne
 const defaultForm = {
   title: '',
   channel: 'sms',
+  scheduleType: 'immediate',
   plannedSendTime: '',
+  recurrenceInterval: 1,
+  recurrenceUnit: 'day',
+  recurrenceEndTime: '',
+  recurrenceMaxCount: null,
   status: 'pending',
   recipientCount: 0,
   creator: '',
@@ -49,7 +54,11 @@ export default function SendRecordsPage() {
 
   const openEdit = (record) => {
     setEditing(record);
-    form.setFieldsValue({ ...record });
+    form.setFieldsValue({
+      ...record,
+      plannedSendTime: record.plannedSendTime ? dayjs(record.plannedSendTime) : null,
+      recurrenceEndTime: record.recurrenceEndTime ? dayjs(record.recurrenceEndTime) : null,
+    });
     setOpen(true);
   };
 
@@ -59,6 +68,10 @@ export default function SendRecordsPage() {
       const payload = {
         ...values,
         plannedSendTime: values.plannedSendTime ? dayjs(values.plannedSendTime).format('YYYY-MM-DDTHH:mm:ss') : '',
+        recurrenceEndTime: values.recurrenceEndTime ? dayjs(values.recurrenceEndTime).format('YYYY-MM-DDTHH:mm:ss') : '',
+        recurrenceInterval: values.scheduleType === 'recurring' ? Number(values.recurrenceInterval || 1) : null,
+        recurrenceUnit: values.scheduleType === 'recurring' ? values.recurrenceUnit : null,
+        recurrenceMaxCount: values.scheduleType === 'recurring' && values.recurrenceMaxCount ? Number(values.recurrenceMaxCount) : null,
         recipientCount: Number(values.recipientCount || 0)
       };
       if (editing) {
@@ -119,15 +132,35 @@ export default function SendRecordsPage() {
 
   const safeRecords = Array.isArray(records) ? records : [];
   const safeRecipients = Array.isArray(recipients) ? recipients : [];
+  const scheduleTypeMeta = {
+    immediate: '立即发送',
+    scheduled: '预约发送',
+    recurring: '循环发送',
+  };
+  const formatRecurrence = (record) => {
+    if (record.scheduleType !== 'recurring') return '-';
+    const interval = record.recurrenceInterval || 1;
+    const unitMap = { hour: '小时', day: '天', week: '周', month: '月' };
+    const unit = unitMap[record.recurrenceUnit] || record.recurrenceUnit || '天';
+    const endText = record.recurrenceEndTime ? `，结束于 ${record.recurrenceEndTime}` : '';
+    const maxText = record.recurrenceMaxCount ? `，最多 ${record.recurrenceMaxCount} 次` : '';
+    return `每 ${interval} ${unit}${endText}${maxText}`;
+  };
 
   const columns = [
     { title: '任务标题', dataIndex: 'title' },
     { title: '发送渠道', dataIndex: 'channel', width: 100, render: (channel) => getChannelLabel(channel) },
+    { title: '调度方式', dataIndex: 'scheduleType', width: 110, render: (value) => scheduleTypeMeta[value] || '立即发送' },
     {
       title: '预约时间',
       dataIndex: 'plannedSendTime',
       width: 180,
       render: (value) => value || '-'
+    },
+    {
+      title: '循环规则',
+      width: 220,
+      render: (_, record) => formatRecurrence(record)
     },
     {
       title: '状态',
@@ -211,8 +244,47 @@ export default function SendRecordsPage() {
           <Form.Item label="发送渠道" name="channel">
             <Select options={CHANNEL_OPTIONS} />
           </Form.Item>
-          <Form.Item label="预约时间" name="plannedSendTime">
-            <DatePicker showTime style={{ width: '100%' }} placeholder="选择预约发送时间" />
+          <Form.Item label="调度方式" name="scheduleType">
+            <Select options={[
+              { value: 'immediate', label: '立即发送' },
+              { value: 'scheduled', label: '预约发送' },
+              { value: 'recurring', label: '循环发送' },
+            ]} />
+          </Form.Item>
+          <Form.Item shouldUpdate noStyle>
+            {({ getFieldValue }) => {
+              const scheduleType = getFieldValue('scheduleType');
+              return (
+                <>
+                  {(scheduleType === 'scheduled' || scheduleType === 'recurring') && (
+                    <Form.Item label={scheduleType === 'recurring' ? '首次发送时间' : '预约时间'} name="plannedSendTime">
+                      <DatePicker showTime style={{ width: '100%' }} placeholder={scheduleType === 'recurring' ? '选择首次发送时间' : '选择预约发送时间'} />
+                    </Form.Item>
+                  )}
+                  {scheduleType === 'recurring' && (
+                    <>
+                      <Form.Item label="循环间隔" name="recurrenceInterval">
+                        <InputNumber min={1} style={{ width: '100%' }} placeholder="默认 1" />
+                      </Form.Item>
+                      <Form.Item label="循环单位" name="recurrenceUnit">
+                        <Select options={[
+                          { value: 'hour', label: '小时' },
+                          { value: 'day', label: '天' },
+                          { value: 'week', label: '周' },
+                          { value: 'month', label: '月' },
+                        ]} />
+                      </Form.Item>
+                      <Form.Item label="循环结束时间" name="recurrenceEndTime">
+                        <DatePicker showTime style={{ width: '100%' }} placeholder="可选：结束时间" />
+                      </Form.Item>
+                      <Form.Item label="最大次数" name="recurrenceMaxCount">
+                        <InputNumber min={1} style={{ width: '100%' }} placeholder="可选：最多发送次数" />
+                      </Form.Item>
+                    </>
+                  )}
+                </>
+              );
+            }}
           </Form.Item>
           <Form.Item label="状态" name="status">
             <Select options={TASK_STATUS_OPTIONS.filter((item) => ['draft', 'pending', 'completed'].includes(item.value))} />

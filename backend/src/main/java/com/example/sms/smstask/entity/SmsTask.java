@@ -23,10 +23,20 @@ public class SmsTask {
     private String successRate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String scheduleType;
+    private Integer recurrenceInterval;
+    private String recurrenceUnit;
+    private LocalDateTime recurrenceEndTime;
+    private Integer recurrenceCount;
+    private Integer recurrenceMaxCount;
 
     public SmsTask() {}
 
     public SmsTask(Long id, String title, String channel, LocalDateTime plannedSendTime, String status, Integer recipientCount, String creator, String successRate, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this(id, title, channel, plannedSendTime, status, recipientCount, creator, successRate, createdAt, updatedAt, "immediate", null, null, null, 0, null);
+    }
+
+    public SmsTask(Long id, String title, String channel, LocalDateTime plannedSendTime, String status, Integer recipientCount, String creator, String successRate, LocalDateTime createdAt, LocalDateTime updatedAt, String scheduleType, Integer recurrenceInterval, String recurrenceUnit, LocalDateTime recurrenceEndTime, Integer recurrenceCount, Integer recurrenceMaxCount) {
         this.id = id;
         this.title = title;
         this.channel = channel;
@@ -37,5 +47,11 @@ public class SmsTask {
         this.successRate = successRate;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.scheduleType = scheduleType;
+        this.recurrenceInterval = recurrenceInterval;
+        this.recurrenceUnit = recurrenceUnit;
+        this.recurrenceEndTime = recurrenceEndTime;
+        this.recurrenceCount = recurrenceCount;
+        this.recurrenceMaxCount = recurrenceMaxCount;
     }
 }

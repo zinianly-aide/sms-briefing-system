@@ -85,3 +85,11 @@ INSERT IGNORE INTO system_config (config_key, config_value, config_desc) VALUES
 -- 7. Columns used by current Java entities / mappers
 ALTER TABLE briefing_template
     ADD COLUMN default_group_ids VARCHAR(512) DEFAULT NULL COMMENT '默认发送群组ID列表';
+
+ALTER TABLE send_task
+    ADD COLUMN IF NOT EXISTS schedule_type VARCHAR(32) DEFAULT 'immediate' COMMENT '调度类型: immediate/scheduled/recurring',
+    ADD COLUMN IF NOT EXISTS recurrence_interval INT DEFAULT NULL COMMENT '循环间隔',
+    ADD COLUMN IF NOT EXISTS recurrence_unit VARCHAR(16) DEFAULT NULL COMMENT '循环单位: hour/day/week/month',
+    ADD COLUMN IF NOT EXISTS recurrence_end_time DATETIME DEFAULT NULL COMMENT '循环结束时间',
+    ADD COLUMN IF NOT EXISTS recurrence_count INT DEFAULT 0 COMMENT '已执行次数',
+    ADD COLUMN IF NOT EXISTS recurrence_max_count INT DEFAULT NULL COMMENT '最大执行次数';

@@ -13,11 +13,11 @@ public interface SmsTaskMapper {
     @Select("SELECT * FROM send_task WHERE id = #{id}")
     SmsTask selectById(@Param("id") Long id);
 
-    @Insert("INSERT INTO send_task (title, channel, planned_send_time, status, recipient_count, creator, success_rate, created_at, updated_at) VALUES (#{title}, #{channel}, #{plannedSendTime}, #{status}, #{recipientCount}, #{creator}, #{successRate}, #{createdAt}, #{updatedAt})")
+    @Insert("INSERT INTO send_task (title, channel, planned_send_time, status, recipient_count, creator, success_rate, created_at, updated_at, schedule_type, recurrence_interval, recurrence_unit, recurrence_end_time, recurrence_count, recurrence_max_count) VALUES (#{title}, #{channel}, #{plannedSendTime}, #{status}, #{recipientCount}, #{creator}, #{successRate}, #{createdAt}, #{updatedAt}, #{scheduleType}, #{recurrenceInterval}, #{recurrenceUnit}, #{recurrenceEndTime}, #{recurrenceCount}, #{recurrenceMaxCount})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(SmsTask task);
 
-    @Update("UPDATE send_task SET title = #{title}, channel = #{channel}, planned_send_time = #{plannedSendTime}, status = #{status}, recipient_count = #{recipientCount}, creator = #{creator}, success_rate = #{successRate}, updated_at = #{updatedAt} WHERE id = #{id}")
+    @Update("UPDATE send_task SET title = #{title}, channel = #{channel}, planned_send_time = #{plannedSendTime}, status = #{status}, recipient_count = #{recipientCount}, creator = #{creator}, success_rate = #{successRate}, updated_at = #{updatedAt}, schedule_type = #{scheduleType}, recurrence_interval = #{recurrenceInterval}, recurrence_unit = #{recurrenceUnit}, recurrence_end_time = #{recurrenceEndTime}, recurrence_count = #{recurrenceCount}, recurrence_max_count = #{recurrenceMaxCount} WHERE id = #{id}")
     int update(SmsTask task);
 
     @Delete("DELETE FROM send_task WHERE id = #{id}")

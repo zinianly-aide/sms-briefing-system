@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, FileTextOutlined, SendOutlined, TeamOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Col, DatePicker, Form, Input, Progress, Row, Select, Space, Typography, message } from 'antd';
+import { Alert, Button, Card, Col, DatePicker, Form, Input, InputNumber, Progress, Row, Select, Space, Typography, message } from 'antd';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +28,7 @@ export default function BriefingEditorPage() {
   const briefingStatusByScheduleType = {
     immediate: BRIEFING_STATUS_OPTIONS.find((item) => item.value === 'pending_send')?.value || 'pending_send',
     scheduled: BRIEFING_STATUS_OPTIONS.find((item) => item.value === 'pending_review')?.value || 'pending_review',
+    recurring: BRIEFING_STATUS_OPTIONS.find((item) => item.value === 'pending_review')?.value || 'pending_review',
   };
 
   useEffect(() => {
@@ -99,6 +100,15 @@ export default function BriefingEditorPage() {
         disasterLevel: values.disasterLevel || null,
         contentPart2: values.contentPart2 || null,
         remark: values.remark || null,
+        legacyPayload: JSON.stringify({
+          scheduleType: values.scheduleType || 'immediate',
+          scheduledTime: values.scheduledTime ? dayjs(values.scheduledTime).format('YYYY-MM-DDTHH:mm:ss') : null,
+          recurrenceInterval: values.recurrenceInterval || null,
+          recurrenceUnit: values.recurrenceUnit || null,
+          recurrenceEndTime: values.recurrenceEndTime ? dayjs(values.recurrenceEndTime).format('YYYY-MM-DDTHH:mm:ss') : null,
+          recurrenceMaxCount: values.recurrenceMaxCount || null,
+          groupIds: values.groupIds || [],
+        }),
       });
       message.success('简讯已提交');
       setConfirmModal(false);
@@ -192,12 +202,45 @@ export default function BriefingEditorPage() {
                 <Select options={CHANNEL_OPTIONS} />
               </Form.Item>
               <Form.Item label="调度方式" name="scheduleType" initialValue="immediate">
-                <Select options={[{ value: 'immediate', label: '立即发送' }, { value: 'scheduled', label: '预约发送' }]} />
+                <Select options={[
+                  { value: 'immediate', label: '立即发送' },
+                  { value: 'scheduled', label: '预约发送' },
+                  { value: 'recurring', label: '定时循环发送' },
+                ]} />
               </Form.Item>
-              {scheduleType === 'scheduled' && (
-                <Form.Item label="预约时间" name="scheduledTime" rules={[{ required: true, message: '请选择预约时间' }]}>
-                  <DatePicker showTime style={{ width: '100%' }} placeholder="选择预约发送时间" />
+              {(scheduleType === 'scheduled' || scheduleType === 'recurring') && (
+                <Form.Item label={scheduleType === 'recurring' ? '首次发送时间' : '预约时间'} name="scheduledTime" rules={[{ required: true, message: '请选择发送时间' }]}>
+                  <DatePicker showTime style={{ width: '100%' }} placeholder={scheduleType === 'recurring' ? '选择首次发送时间' : '选择预约发送时间'} />
                 </Form.Item>
+              )}
+              {scheduleType === 'recurring' && (
+                <>
+                  <Row gutter={12}>
+                    <Col span={8}>
+                      <Form.Item label="循环间隔" name="recurrenceInterval" initialValue={1} rules={[{ required: true, message: '请输入循环间隔' }]}>
+                        <InputNumber min={1} style={{ width: '100%' }} placeholder="例如 1" />
+                      </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                      <Form.Item label="循环单位" name="recurrenceUnit" initialValue="day" rules={[{ required: true, message: '请选择循环单位' }]}>
+                        <Select options={[
+                          { value: 'hour', label: '小时' },
+                          { value: 'day', label: '天' },
+                          { value: 'week', label: '周' },
+                          { value: 'month', label: '月' },
+                        ]} />
+                      </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                      <Form.Item label="最大次数" name="recurrenceMaxCount">
+                        <InputNumber min={1} style={{ width: '100%' }} placeholder="可选" />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                  <Form.Item label="循环结束时间" name="recurrenceEndTime">
+                    <DatePicker showTime style={{ width: '100%' }} placeholder="可选：到此时间后停止发送" />
+                  </Form.Item>
+                </>
               )}
               <Form.Item label="说明" name="remark">
                 <Input.TextArea rows={2} maxLength={500} placeholder="可选：备注说明" />
